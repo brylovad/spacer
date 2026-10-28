@@ -214,3 +214,19 @@ button.primary {
   font-size: 0.8rem;
   color: var(--muted);
 }
+
+.diagnostics {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.diagnostics summary {
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.diagnostics ul {
+  padding-left: 18px;
+  word-break: break-all;
+}

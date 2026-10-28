@@ -13,9 +13,17 @@ function platformHint(): string {
 export function VoiceSettingsPanel() {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [settings, setSettings] = useState<VoiceSettings>(loadVoiceSettings);
+  const [diagnostics, setDiagnostics] = useState<string[]>([]);
 
   useEffect(() => {
-    speechProvider.getVoices().then(setVoices);
+    const refresh = () => {
+      speechProvider.getVoices().then((list) => {
+        setVoices(list);
+        setDiagnostics(speechProvider.describeVoices());
+      });
+    };
+    refresh();
+    return speechProvider.onVoicesChanged(refresh);
   }, []);
 
   const update = (patch: Partial<VoiceSettings>) => {
@@ -72,6 +80,15 @@ export function VoiceSettingsPanel() {
         ▶ {t.voice.preview}
       </button>
       {!hasEnhanced && <p className="notice">{platformHint()}</p>}
+      <details className="diagnostics">
+        <summary>{t.voice.diagnostics}</summary>
+        <p>{t.voice.allVoices(Number(diagnostics[0] ?? 0))}</p>
+        <ul>
+          {diagnostics.slice(1).map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      </details>
     </details>
   );
 }

@@ -31,9 +31,11 @@ export const pl = {
     sample: "Cześć, jestem Twoim przewodnikiem. Chodźmy na spacer i zobaczmy, co ciekawego kryje okolica.",
     none: "Nie znalazłem polskich głosów w tym urządzeniu.",
     hintIos:
-      "Bardziej naturalne głosy pobierzesz za darmo: Ustawienia → Dostępność → Treść mówiona → Głosy → Polski → wybierz głos z dopiskiem „Rozszerzony” lub „Premium”. Potem odśwież Spacer.",
+      "Bardziej naturalne głosy pobierzesz za darmo: Ustawienia → Dostępność → Treść mówiona → Głosy → Polski → wybierz głos z dopiskiem „Rozszerzony” lub „Premium”. Potem całkowicie zamknij przeglądarkę (przesuń ją w górę w przełączniku aplikacji) i otwórz Spacer ponownie.",
     hintAndroid:
       "Bardziej naturalne głosy: zainstaluj „Usługi mowy od Google”, a w Ustawienia → Ułatwienia dostępu → Zamiana tekstu na mowę pobierz polski głos wysokiej jakości.",
+    diagnostics: "Szczegóły techniczne",
+    allVoices: (count: number) => `Wszystkie głosy zgłoszone przez urządzenie: ${count}. Polskie:`,
     hintDesktop: "W przeglądarce Microsoft Edge dostępne są darmowe, bardzo naturalne głosy „Natural”.",
   },
   meters: (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`),

@@ -21,6 +21,10 @@ export interface SpeechProvider {
   unlock(): void;
   /** Dostępne głosy w języku aplikacji, od najlepszego. */
   getVoices(): Promise<VoiceOption[]>;
+  /** Powiadamia, gdy urządzenie zgłosi nową listę głosów (np. po pobraniu głosu w ustawieniach). */
+  onVoicesChanged(listener: () => void): () => void;
+  /** Surowe informacje o głosach do diagnostyki problemów na konkretnym telefonie. */
+  describeVoices(): string[];
   configure(settings: VoiceSettings): void;
   speak(text: string): void;
   pause(): void;

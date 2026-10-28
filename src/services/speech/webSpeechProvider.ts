@@ -94,6 +94,30 @@ export class WebSpeechProvider implements SpeechProvider {
     return voices.map((v) => ({ id: v.voiceURI, name: voiceLabel(v, this.enhancedLabel), enhanced: isEnhanced(v) }));
   }
 
+  onVoicesChanged(listener: () => void) {
+    if (!this.supported) return () => {};
+    // Safari dokłada głosy stopniowo; po powrocie z Ustawień lista też mogła się zmienić.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") listener();
+    };
+    this.synth.addEventListener("voiceschanged", listener);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      this.synth.removeEventListener("voiceschanged", listener);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }
+
+  describeVoices(): string[] {
+    if (!this.supported) return [];
+    const all = this.synth.getVoices();
+    const prefix = normalizeLang(this.locale).slice(0, 2);
+    const matching = all
+      .filter((v) => normalizeLang(v.lang).startsWith(prefix))
+      .map((v) => `${v.name} · ${v.lang} · ${v.voiceURI}${v.localService ? "" : " · online"}`);
+    return [`${all.length}`, ...matching];
+  }
+
   configure(settings: VoiceSettings) {
     this.settings = settings;
   }
