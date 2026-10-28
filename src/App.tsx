@@ -58,7 +58,12 @@ export default function App() {
           ) : (
             <p className="notice">{t.noSpeech}</p>
           )}
-          {story.narrator === "extracts" && <p className="notice">{t.fallbackNotice}</p>}
+          {story.narrator === "extracts" && (
+            <p className="notice">
+              {t.fallbackNotice}
+              {story.fallbackReason && ` ${t.fallbackReason} ${story.fallbackReason}`}
+            </p>
+          )}
           {story.text.split(/\n{2,}/).map((paragraph, i) => (
             <p key={i}>{paragraph}</p>
           ))}

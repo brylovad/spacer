@@ -32,6 +32,8 @@ Na telefonie lokalizacja działa tylko przez HTTPS, więc najprościej testować
 
 Nigdy nie wpisuj klucza do kodu ani do repozytorium.
 
+**Sprawdzenie konfiguracji:** otwórz w przeglądarce `https://…vercel.app/api/story`. Odpowiedź `{"configured":true,…}` oznacza, że serwer widzi klucz. Gdy aplikacja mimo to czyta fragmenty Wikipedii, pod tytułem opowieści wyświetla powód (np. brak środków na koncie API). Zmienne środowiskowe działają dopiero po **Redeploy** i tylko w środowisku, dla którego je zaznaczono (Production / Preview).
+
 ## Struktura
 
 ```

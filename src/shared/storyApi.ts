@@ -32,3 +32,9 @@ export interface StoryErrorResponse {
   error: "not_configured" | "bad_request" | "refused" | "upstream_error";
   message: string;
 }
+
+/** Odpowiedź GET /api/story — pozwala sprawdzić w przeglądarce, czy serwer widzi klucz. */
+export interface StoryStatusResponse {
+  configured: boolean;
+  model: string;
+}

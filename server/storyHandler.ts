@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { StoryErrorResponse, StoryRequest, StoryResponse } from "../src/shared/storyApi";
+import type { StoryErrorResponse, StoryRequest, StoryResponse, StoryStatusResponse } from "../src/shared/storyApi.js";
 
 const MODEL = "claude-opus-5-5";
 const MAX_SOURCES = 12;
@@ -55,17 +55,31 @@ function isStoryRequest(body: unknown): body is StoryRequest {
   );
 }
 
-function json(status: number, body: StoryResponse | StoryErrorResponse): Response {
+function json(status: number, body: StoryResponse | StoryErrorResponse | StoryStatusResponse): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json; charset=utf-8" },
   });
 }
 
-/** Obsługa POST /api/story — wspólna dla funkcji Vercela i serwera deweloperskiego Vite. */
+/** Komunikat z odpowiedzi API Anthropic, np. o braku środków na koncie. */
+function upstreamMessage(error: InstanceType<typeof Anthropic.APIError>): string {
+  const body = error.error as { error?: { message?: string } } | undefined;
+  if (error.status === 401) return "Nieprawidłowy klucz API — sprawdź ANTHROPIC_API_KEY.";
+  if (error.status === 429) return "Przekroczony limit zapytań API — spróbuj za chwilę.";
+  return `Błąd API (${error.status ?? "brak statusu"}): ${body?.error?.message ?? error.message}`;
+}
+
+/** Obsługa /api/story — wspólna dla funkcji Vercela i serwera deweloperskiego Vite. */
 export async function handleStoryRequest(request: Request, apiKey: string | undefined): Promise<Response> {
+  if (request.method === "GET") {
+    return json(200, { configured: Boolean(apiKey), model: MODEL });
+  }
   if (!apiKey) {
-    return json(503, { error: "not_configured", message: "Brak ANTHROPIC_API_KEY na serwerze." });
+    return json(503, {
+      error: "not_configured",
+      message: "Brak ANTHROPIC_API_KEY na serwerze — dodaj zmienną na Vercelu i zrób Redeploy.",
+    });
   }
 
   let body: unknown;
@@ -111,7 +125,7 @@ export async function handleStoryRequest(request: Request, apiKey: string | unde
   } catch (error) {
     console.error("Story generation failed", error);
     if (error instanceof Anthropic.APIError) {
-      return json(502, { error: "upstream_error", message: `Błąd API (${error.status ?? "brak statusu"}).` });
+      return json(502, { error: "upstream_error", message: upstreamMessage(error) });
     }
     return json(502, { error: "upstream_error", message: "Nie udało się przygotować opowieści." });
   }

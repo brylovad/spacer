@@ -16,6 +16,6 @@ export class ApiStoryProvider implements StoryProvider {
       return { ...story, narrator: "ai" };
     }
     const error = (await res.json().catch(() => undefined)) as StoryErrorResponse | undefined;
-    throw new Error(error?.message ?? `Story API ${res.status}`);
+    throw new Error(error?.message ?? `Serwer opowieści odpowiedział błędem ${res.status}.`);
   }
 }
