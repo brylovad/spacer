@@ -1,3 +1,4 @@
+import { VoiceSettingsPanel } from "./components/VoiceSettingsPanel";
 import { t } from "./i18n";
 import { speechProvider } from "./services/speech";
 import { useGuide, type GuidePhase } from "./useGuide";
@@ -85,6 +86,8 @@ export default function App() {
           </ul>
         </section>
       )}
+
+      {speechProvider.supported && <VoiceSettingsPanel />}
 
       <footer className="footer">
         {phase === "ready" && <p>{t.sources}</p>}

@@ -1,7 +1,10 @@
-import type { PlaybackState, SpeechProvider } from "./types";
+import type { PlaybackState, SpeechProvider, VoiceOption, VoiceSettings } from "./types";
 
 // Chrome urywa długie wypowiedzi po ok. 15 s, więc czytamy tekst krótszymi kawałkami.
 const MAX_CHUNK_CHARS = 200;
+// Przeglądarki ładują listę głosów asynchronicznie; dłużej nie czekamy.
+const VOICES_TIMEOUT_MS = 1500;
+const ENHANCED_PATTERN = /enhanced|premium|natural|neural|wavenet|google|online/i;
 
 function splitIntoChunks(text: string): string[] {
   const sentences = text.replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]*/g) ?? [text];
@@ -18,6 +21,25 @@ function splitIntoChunks(text: string): string[] {
   return chunks;
 }
 
+function normalizeLang(lang: string): string {
+  return lang.toLowerCase().replace("_", "-");
+}
+
+function isEnhanced(voice: SpeechSynthesisVoice): boolean {
+  // iOS oznacza lepsze głosy w voiceURI (com.apple.voice.enhanced…, …premium…), Edge w nazwie („Natural”).
+  return ENHANCED_PATTERN.test(voice.name) || ENHANCED_PATTERN.test(voice.voiceURI);
+}
+
+/** Etykieta czytelna dla użytkownika, np. „Zosia (lepsza jakość)”. */
+function voiceLabel(voice: SpeechSynthesisVoice, enhancedLabel: string): string {
+  const name = voice.name
+    .replace(/^(Microsoft|Google)\s+/i, "")
+    .replace(/\s*\((Enhanced|Premium|Ulepszony|Rozszerzony)\)\s*/i, "")
+    .replace(/\s+Online \(Natural\)\s*-.*$/i, "")
+    .replace(/\s*-\s*Polish.*$/i, "");
+  return isEnhanced(voice) ? `${name} (${enhancedLabel})` : name;
+}
+
 export class WebSpeechProvider implements SpeechProvider {
   readonly supported = typeof window !== "undefined" && "speechSynthesis" in window;
   private listeners = new Set<(state: PlaybackState) => void>();
@@ -25,8 +47,12 @@ export class WebSpeechProvider implements SpeechProvider {
   private state: PlaybackState = "idle";
   /** Zwiększany przy każdym speak/stop, żeby zdarzenia starych wypowiedzi nie ruszały kolejki. */
   private session = 0;
+  private settings: VoiceSettings = { rate: 1 };
 
-  constructor(private locale: string) {}
+  constructor(
+    private locale: string,
+    private enhancedLabel: string,
+  ) {}
 
   private get synth() {
     return window.speechSynthesis;
@@ -37,10 +63,44 @@ export class WebSpeechProvider implements SpeechProvider {
     this.listeners.forEach((l) => l(state));
   }
 
-  private pickVoice(): SpeechSynthesisVoice | undefined {
-    const lang = this.locale.toLowerCase();
-    const voices = this.synth.getVoices().filter((v) => v.lang.toLowerCase().replace("_", "-").startsWith(lang.slice(0, 2)));
-    return voices.find((v) => v.lang.toLowerCase().replace("_", "-") === lang && v.localService) ?? voices[0];
+  /** Głosy w języku aplikacji: najpierw lepszej jakości, potem dokładny locale, potem lokalne. */
+  private matchingVoices(): SpeechSynthesisVoice[] {
+    const locale = normalizeLang(this.locale);
+    const score = (v: SpeechSynthesisVoice) =>
+      (isEnhanced(v) ? 4 : 0) + (normalizeLang(v.lang) === locale ? 2 : 0) + (v.localService ? 1 : 0);
+    return this.synth
+      .getVoices()
+      .filter((v) => normalizeLang(v.lang).startsWith(locale.slice(0, 2)))
+      .sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+  }
+
+  private loadVoices(): Promise<SpeechSynthesisVoice[]> {
+    if (!this.supported) return Promise.resolve([]);
+    const voices = this.matchingVoices();
+    if (voices.length > 0) return Promise.resolve(voices);
+    return new Promise((resolve) => {
+      const done = () => {
+        this.synth.removeEventListener("voiceschanged", done);
+        clearTimeout(timer);
+        resolve(this.matchingVoices());
+      };
+      const timer = setTimeout(done, VOICES_TIMEOUT_MS);
+      this.synth.addEventListener("voiceschanged", done);
+    });
+  }
+
+  async getVoices(): Promise<VoiceOption[]> {
+    const voices = await this.loadVoices();
+    return voices.map((v) => ({ id: v.voiceURI, name: voiceLabel(v, this.enhancedLabel), enhanced: isEnhanced(v) }));
+  }
+
+  configure(settings: VoiceSettings) {
+    this.settings = settings;
+  }
+
+  private currentVoice(): SpeechSynthesisVoice | undefined {
+    const voices = this.matchingVoices();
+    return voices.find((v) => v.voiceURI === this.settings.voiceId) ?? voices[0];
   }
 
   unlock() {
@@ -67,7 +127,8 @@ export class WebSpeechProvider implements SpeechProvider {
     }
     const u = new SpeechSynthesisUtterance(chunk);
     u.lang = this.locale;
-    const voice = this.pickVoice();
+    u.rate = this.settings.rate;
+    const voice = this.currentVoice();
     if (voice) u.voice = voice;
     u.onend = () => this.speakNext(session);
     u.onerror = (e) => {

@@ -19,6 +19,23 @@ export const pl = {
   fallbackReason: "Powód:",
   noSpeech: "Twoja przeglądarka nie obsługuje czytania na głos — możesz przeczytać opowieść poniżej.",
   privacy: "Twoja lokalizacja nie jest nigdzie zapisywana.",
+  voice: {
+    title: "Głos przewodnika",
+    voice: "Głos",
+    auto: "Automatycznie (najlepszy dostępny)",
+    enhanced: "lepsza jakość",
+    rate: "Tempo",
+    rateSlow: "wolniej",
+    rateFast: "szybciej",
+    preview: "Posłuchaj próbki",
+    sample: "Cześć, jestem Twoim przewodnikiem. Chodźmy na spacer i zobaczmy, co ciekawego kryje okolica.",
+    none: "Nie znalazłem polskich głosów w tym urządzeniu.",
+    hintIos:
+      "Bardziej naturalne głosy pobierzesz za darmo: Ustawienia → Dostępność → Treść mówiona → Głosy → Polski → wybierz głos z dopiskiem „Rozszerzony” lub „Premium”. Potem odśwież Spacer.",
+    hintAndroid:
+      "Bardziej naturalne głosy: zainstaluj „Usługi mowy od Google”, a w Ustawienia → Ułatwienia dostępu → Zamiana tekstu na mowę pobierz polski głos wysokiej jakości.",
+    hintDesktop: "W przeglądarce Microsoft Edge dostępne są darmowe, bardzo naturalne głosy „Natural”.",
+  },
   meters: (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`),
   errors: {
     permissionDenied: "Brak zgody na lokalizację. Włącz ją w ustawieniach przeglądarki i spróbuj ponownie.",

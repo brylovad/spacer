@@ -7,7 +7,7 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 | Decyzja | Teraz | Jak zmienić |
 |---|---|---|
 | Język | polski | Nowy plik w `src/i18n/` z kształtem `Messages`, wpis w `src/i18n/index.ts`, `language`/`speechLocale` w `src/config.ts`. Wikipedia, Nominatim i prompt biorą język z konfiguracji. |
-| Głos | wbudowany w telefon (Web Speech API) | Nowa klasa implementująca `SpeechProvider` (`src/services/speech/types.ts`), podmiana w `src/services/speech/index.ts`. Płatny TTS powinien iść przez serwer (klucz). |
+| Głos | wbudowany w telefon (Web Speech API); automatycznie najlepszy dostępny polski głos, użytkownik może wybrać głos i tempo (zapis w przeglądarce, `src/services/settings.ts`) | Nowa klasa implementująca `SpeechProvider` (`src/services/speech/types.ts`), podmiana w `src/services/speech/index.ts`. Płatny TTS powinien iść przez serwer (klucz). |
 | Narrator | Claude, z zapasowym składaniem fragmentów | Nowa klasa `StoryProvider` w `src/services/story/`, kolejność w `index.ts`. Model i prompt: `server/storyHandler.ts`. |
 | Personalizacja | brak | Dodać pola do `StoryRequest` (`src/shared/storyApi.ts`) i uwzględnić je w prompcie. |
 | Promień, liczba miejsc | 1 km, 10 miejsc | `src/config.ts`. |
