@@ -1,7 +1,9 @@
+import { PlaybackStatus } from "./components/PlaybackStatus";
 import { VoiceSettingsPanel } from "./components/VoiceSettingsPanel";
 import { t } from "./i18n";
 import { speechProvider } from "./services/speech";
 import { useGuide, type GuidePhase } from "./useGuide";
+import { usePlayback } from "./usePlayback";
 
 const busyLabels: Partial<Record<GuidePhase, string>> = {
   locating: t.locating,
@@ -11,7 +13,8 @@ const busyLabels: Partial<Record<GuidePhase, string>> = {
 };
 
 export default function App() {
-  const { state, playback, start } = useGuide();
+  const { state, start } = useGuide();
+  const { state: playback, progress } = usePlayback();
   const { phase, place, sources, story, error } = state;
   const busyLabel = busyLabels[phase];
   const nearby = sources.filter((s) => s.distanceMeters !== undefined);
@@ -51,7 +54,17 @@ export default function App() {
           <h2>{story.title}</h2>
           {speechProvider.supported ? (
             <div className="player">
-              {playback === "idle" && <button onClick={() => speechProvider.speak(story.text)}>▶ {t.play}</button>}
+              {playback === "idle" && (
+                <button
+                  onClick={() => {
+                    speechProvider.unlock();
+                    speechProvider.speak(story.text);
+                  }}
+                >
+                  ▶ {t.play}
+                </button>
+              )}
+              {playback === "loading" && <PlaybackStatus progress={progress} />}
               {playback === "playing" && <button onClick={() => speechProvider.pause()}>❚❚ {t.pause}</button>}
               {playback === "paused" && <button onClick={() => speechProvider.resume()}>▶ {t.resume}</button>}
               {playback !== "idle" && <button onClick={() => speechProvider.stop()}>■ {t.stop}</button>}

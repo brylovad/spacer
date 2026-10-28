@@ -30,6 +30,7 @@ function devStoryApi(apiKey: string | undefined): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
+    worker: { format: "es" },
     plugins: [
       react(),
       devStoryApi(env.ANTHROPIC_API_KEY),
@@ -52,8 +53,23 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          // API i zewnętrzne usługi zawsze przez sieć — cache'ujemy tylko samą aplikację.
+          // API i zewnętrzne usługi zawsze przez sieć — cache'ujemy aplikację i pliki silnika głosu.
           navigateFallbackDenylist: [/^\/api\//],
+          runtimeCaching: [
+            {
+              // Modele Piper (ok. 60 MB) i pliki WASM: pobierane raz, potem z pamięci telefonu.
+              urlPattern: ({ url }) =>
+                url.hostname === "huggingface.co" ||
+                (url.hostname === "cdnjs.cloudflare.com" && url.pathname.includes("/onnxruntime-web/")) ||
+                (url.hostname === "cdn.jsdelivr.net" && url.pathname.includes("/piper-wasm@")),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "spacer-voice-models",
+                cacheableResponse: { statuses: [200] },
+                expiration: { maxEntries: 20 },
+              },
+            },
+          ],
         },
       }),
     ],

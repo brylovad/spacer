@@ -1,3 +1,4 @@
+import { splitIntoChunks } from "./text";
 import type { PlaybackState, SpeechProvider, VoiceOption, VoiceSettings } from "./types";
 
 // Chrome urywa długie wypowiedzi po ok. 15 s, więc czytamy tekst krótszymi kawałkami.
@@ -5,21 +6,6 @@ const MAX_CHUNK_CHARS = 200;
 // Przeglądarki ładują listę głosów asynchronicznie; dłużej nie czekamy.
 const VOICES_TIMEOUT_MS = 1500;
 const ENHANCED_PATTERN = /enhanced|premium|natural|neural|wavenet|google|online/i;
-
-function splitIntoChunks(text: string): string[] {
-  const sentences = text.replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]*/g) ?? [text];
-  const chunks: string[] = [];
-  let current = "";
-  for (const sentence of sentences) {
-    if (current && current.length + sentence.length > MAX_CHUNK_CHARS) {
-      chunks.push(current.trim());
-      current = "";
-    }
-    current += sentence;
-  }
-  if (current.trim()) chunks.push(current.trim());
-  return chunks;
-}
 
 function normalizeLang(lang: string): string {
   return lang.toLowerCase().replace("_", "-");
@@ -91,7 +77,12 @@ export class WebSpeechProvider implements SpeechProvider {
 
   async getVoices(): Promise<VoiceOption[]> {
     const voices = await this.loadVoices();
-    return voices.map((v) => ({ id: v.voiceURI, name: voiceLabel(v, this.enhancedLabel), enhanced: isEnhanced(v) }));
+    return voices.map((v) => ({
+      id: v.voiceURI,
+      name: voiceLabel(v, this.enhancedLabel),
+      enhanced: isEnhanced(v),
+      kind: "device",
+    }));
   }
 
   onVoicesChanged(listener: () => void) {
@@ -118,6 +109,12 @@ export class WebSpeechProvider implements SpeechProvider {
     return [`${all.length}`, ...matching];
   }
 
+  prepare() {}
+
+  onProgress() {
+    return () => {};
+  }
+
   configure(settings: VoiceSettings) {
     this.settings = settings;
   }
@@ -137,7 +134,7 @@ export class WebSpeechProvider implements SpeechProvider {
   speak(text: string) {
     if (!this.supported) return;
     this.stop();
-    this.queue = splitIntoChunks(text);
+    this.queue = splitIntoChunks(text, MAX_CHUNK_CHARS);
     this.setState("playing");
     this.speakNext(this.session);
   }

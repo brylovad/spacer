@@ -3,7 +3,7 @@ import { config } from "./config";
 import { t } from "./i18n";
 import { reverseGeocode } from "./services/geocoding";
 import { GeolocationError, getCurrentPosition } from "./services/geolocation";
-import { speechProvider, type PlaybackState } from "./services/speech";
+import { speechProvider } from "./services/speech";
 import { storyProvider, type Story } from "./services/story";
 import { gatherSources } from "./services/wikipedia";
 import type { PlaceContext, SourceArticle } from "./shared/storyApi";
@@ -29,14 +29,14 @@ function errorMessage(error: unknown): string {
 /** Cały przepływ: lokalizacja → nazwa miejsca → artykuły z Wikipedii → opowieść → głos. */
 export function useGuide() {
   const [state, setState] = useState<GuideState>({ phase: "idle", sources: [] });
-  const [playback, setPlayback] = useState<PlaybackState>("idle");
 
-  useEffect(() => speechProvider.onStateChange(setPlayback), []);
   useEffect(() => () => speechProvider.stop(), []);
 
   const start = useCallback(async () => {
     speechProvider.stop();
     speechProvider.unlock();
+    // Głos (np. model Piper) przygotowuje się równolegle z lokalizacją i pisaniem opowieści.
+    speechProvider.prepare();
     setState({ phase: "locating", sources: [] });
     try {
       const coords = await getCurrentPosition();
@@ -65,5 +65,5 @@ export function useGuide() {
     }
   }, []);
 
-  return { state, playback, start };
+  return { state, start };
 }

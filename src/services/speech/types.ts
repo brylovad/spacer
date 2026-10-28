@@ -1,10 +1,12 @@
-export type PlaybackState = "idle" | "playing" | "paused";
+export type PlaybackState = "idle" | "loading" | "playing" | "paused";
 
 export interface VoiceOption {
   id: string;
   name: string;
   /** Głos lepszej jakości (np. „Enhanced”/„Premium” na iOS, „Natural” w Edge, głosy Google). */
   enhanced: boolean;
+  /** „natural” — głos neuronowy działający w aplikacji (Piper), „device” — głos systemu telefonu. */
+  kind: "natural" | "device";
 }
 
 export interface VoiceSettings {
@@ -14,11 +16,13 @@ export interface VoiceSettings {
   rate: number;
 }
 
-/** Wymienialny moduł głosu: dziś synteza wbudowana w przeglądarkę, w przyszłości np. płatny TTS. */
+/** Wymienialny moduł głosu (Piper w przeglądarce, głosy systemu, w przyszłości np. płatny TTS). */
 export interface SpeechProvider {
   readonly supported: boolean;
   /** Wywołać w obsłudze kliknięcia — iOS pozwala na dźwięk tylko po geście użytkownika. */
   unlock(): void;
+  /** Rozpoczyna w tle przygotowanie głosu (np. pobranie modelu), żeby pierwsza wypowiedź startowała szybciej. */
+  prepare(): void;
   /** Dostępne głosy w języku aplikacji, od najlepszego. */
   getVoices(): Promise<VoiceOption[]>;
   /** Powiadamia, gdy urządzenie zgłosi nową listę głosów (np. po pobraniu głosu w ustawieniach). */
@@ -31,4 +35,6 @@ export interface SpeechProvider {
   resume(): void;
   stop(): void;
   onStateChange(listener: (state: PlaybackState) => void): () => void;
+  /** Postęp przygotowania głosu (0–1) w stanie „loading”; undefined, gdy nieznany. */
+  onProgress(listener: (progress: number | undefined) => void): () => void;
 }

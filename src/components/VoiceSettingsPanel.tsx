@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import { t } from "../i18n";
-import { saveVoiceSettings, loadVoiceSettings } from "../services/settings";
+import { loadVoiceSettings, saveVoiceSettings } from "../services/settings";
 import { speechProvider, type VoiceOption, type VoiceSettings } from "../services/speech";
-
-function platformHint(): string {
-  const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return t.voice.hintIos;
-  if (/Android/.test(ua)) return t.voice.hintAndroid;
-  return t.voice.hintDesktop;
-}
+import { usePlayback } from "../usePlayback";
+import { PlaybackStatus } from "./PlaybackStatus";
 
 export function VoiceSettingsPanel() {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [settings, setSettings] = useState<VoiceSettings>(loadVoiceSettings);
   const [diagnostics, setDiagnostics] = useState<string[]>([]);
+  const playback = usePlayback();
 
   useEffect(() => {
     const refresh = () => {
@@ -33,10 +29,11 @@ export function VoiceSettingsPanel() {
     saveVoiceSettings(next);
   };
 
-  const hasEnhanced = voices.some((v) => v.enhanced);
+  const natural = voices.filter((v) => v.kind === "natural");
+  const device = voices.filter((v) => v.kind === "device");
 
   return (
-    <details className="card voice-settings">
+    <details className="card voice-settings" onToggle={() => setDiagnostics(speechProvider.describeVoices())}>
       <summary>{t.voice.title}</summary>
       {voices.length === 0 ? (
         <p className="notice">{t.voice.none}</p>
@@ -45,11 +42,24 @@ export function VoiceSettingsPanel() {
           <span>{t.voice.voice}</span>
           <select value={settings.voiceId ?? ""} onChange={(e) => update({ voiceId: e.target.value || undefined })}>
             <option value="">{t.voice.auto}</option>
-            {voices.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
+            {natural.length > 0 && (
+              <optgroup label={t.voice.naturalGroup}>
+                {natural.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {device.length > 0 && (
+              <optgroup label={t.voice.deviceGroup}>
+                {device.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
       )}
@@ -71,15 +81,21 @@ export function VoiceSettingsPanel() {
           <span>{t.voice.rateFast}</span>
         </span>
       </label>
-      <button
-        onClick={() => {
-          speechProvider.unlock();
-          speechProvider.speak(t.voice.sample);
-        }}
-      >
-        ▶ {t.voice.preview}
-      </button>
-      {!hasEnhanced && <p className="notice">{platformHint()}</p>}
+      {playback.state === "loading" ? (
+        <PlaybackStatus progress={playback.progress} />
+      ) : (
+        <button
+          onClick={() => {
+            speechProvider.unlock();
+            speechProvider.speak(t.voice.sample);
+          }}
+        >
+          ▶ {t.voice.preview}
+        </button>
+      )}
+      {natural.length > 0 && !settings.voiceId?.startsWith("system:") && (
+        <p className="notice">{t.voice.naturalNote}</p>
+      )}
       <details className="diagnostics">
         <summary>{t.voice.diagnostics}</summary>
         <p>{t.voice.allVoices(Number(diagnostics[0] ?? 0))}</p>

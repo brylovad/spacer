@@ -7,7 +7,7 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 | Decyzja | Teraz | Jak zmienić |
 |---|---|---|
 | Język | polski | Nowy plik w `src/i18n/` z kształtem `Messages`, wpis w `src/i18n/index.ts`, `language`/`speechLocale` w `src/config.ts`. Wikipedia, Nominatim i prompt biorą język z konfiguracji. |
-| Głos | wbudowany w telefon (Web Speech API); automatycznie najlepszy dostępny polski głos, użytkownik może wybrać głos i tempo (zapis w przeglądarce, `src/services/settings.ts`) | Nowa klasa implementująca `SpeechProvider` (`src/services/speech/types.ts`), podmiana w `src/services/speech/index.ts`. Płatny TTS powinien iść przez serwer (klucz). |
+| Głos | Piper (open source) działający w telefonie: model neuronowy pobierany raz (~63 MB) z Hugging Face, synteza w Web Workerze; głosy telefonu (Web Speech API) jako wybór ręczny i zapas, gdy Piper nie zadziała. Wybór głosu i tempa zapisany w przeglądarce (`src/services/settings.ts`) | Głosy Piper: `src/services/speech/piper/voices.ts`. Inny silnik: nowa klasa `SpeechProvider` (`src/services/speech/types.ts`) i podmiana w `src/services/speech/index.ts`. Płatny TTS powinien iść przez serwer (klucz). |
 | Narrator | Claude, z zapasowym składaniem fragmentów | Nowa klasa `StoryProvider` w `src/services/story/`, kolejność w `index.ts`. Model i prompt: `server/storyHandler.ts`. |
 | Personalizacja | brak | Dodać pola do `StoryRequest` (`src/shared/storyApi.ts`) i uwzględnić je w prompcie. |
 | Promień, liczba miejsc | 1 km, 10 miejsc | `src/config.ts`. |
@@ -23,6 +23,10 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 6. **Hosting: Vercel.** Frontend statyczny + funkcja `api/story.ts`. Logika serwera jest w `server/` jako zwykła funkcja `Request → Response`, więc przeniesienie na inny hosting to nowy cienki adapter.
 
 ## Znane ograniczenia prototypu
+
+- Głosy Piper: pierwsze użycie pobiera ok. 63 MB (potem z pamięci telefonu); na starszych telefonach start mowy może trwać kilka sekund. Przed komercyjnym użyciem sprawdzić licencję każdego głosu w jego karcie modelu (MODEL_CARD na huggingface.co/rhasspy/piper-voices).
+- Silnik `onnxruntime-web` musi mieć dokładnie wersję 1.18.0 — biblioteka Piper pobiera pliki WASM tej wersji z CDN.
+- iOS nie udostępnia stronom pobranych w Ustawieniach głosów „Rozszerzony”/„Premium” — dlatego Piper.
 
 - Publiczny Nominatim ma limit 1 zapytania/s; przy większym ruchu potrzebny płatny dostawca lub własna instancja.
 - Jakość głosu zależy od telefonu (iOS ma zwykle lepsze polskie głosy niż Android).

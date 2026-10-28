@@ -30,13 +30,16 @@ export const pl = {
     preview: "Posłuchaj próbki",
     sample: "Cześć, jestem Twoim przewodnikiem. Chodźmy na spacer i zobaczmy, co ciekawego kryje okolica.",
     none: "Nie znalazłem polskich głosów w tym urządzeniu.",
-    hintIos:
-      "Bardziej naturalne głosy pobierzesz za darmo: Ustawienia → Dostępność → Treść mówiona → Głosy → Polski → wybierz głos z dopiskiem „Rozszerzony” lub „Premium”. Potem całkowicie zamknij przeglądarkę (przesuń ją w górę w przełączniku aplikacji) i otwórz Spacer ponownie.",
-    hintAndroid:
-      "Bardziej naturalne głosy: zainstaluj „Usługi mowy od Google”, a w Ustawienia → Ułatwienia dostępu → Zamiana tekstu na mowę pobierz polski głos wysokiej jakości.",
+    naturalGroup: "Naturalne głosy (działają w aplikacji)",
+    deviceGroup: "Głosy telefonu",
+    naturalLabel: (name: string, sizeMb: number) => `${name} (pobranie ok. ${sizeMb} MB)`,
+    deviceLabel: (name: string) => name,
+    naturalNote:
+      "Naturalny głos pobiera się raz, przy pierwszym użyciu (najlepiej przez Wi‑Fi). Potem działa w telefonie — tekst nie jest nigdzie wysyłany.",
+    preparing: "Przygotowuję głos…",
+    downloading: (percent: number) => `Pobieram głos: ${percent}%`,
     diagnostics: "Szczegóły techniczne",
     allVoices: (count: number) => `Wszystkie głosy zgłoszone przez urządzenie: ${count}. Polskie:`,
-    hintDesktop: "W przeglądarce Microsoft Edge dostępne są darmowe, bardzo naturalne głosy „Natural”.",
   },
   meters: (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`),
   errors: {

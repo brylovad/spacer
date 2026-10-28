@@ -7,7 +7,10 @@ const DEFAULT_VOICE: VoiceSettings = { rate: 1 };
 export function loadVoiceSettings(): VoiceSettings {
   try {
     const raw = localStorage.getItem(VOICE_KEY);
-    return raw ? { ...DEFAULT_VOICE, ...(JSON.parse(raw) as Partial<VoiceSettings>) } : DEFAULT_VOICE;
+    const saved = raw ? { ...DEFAULT_VOICE, ...(JSON.parse(raw) as Partial<VoiceSettings>) } : DEFAULT_VOICE;
+    // Wybór sprzed wprowadzenia głosów Piper (bez prefiksu silnika) — wracamy do ustawienia automatycznego.
+    if (saved.voiceId && !/^(piper|system):/.test(saved.voiceId)) delete saved.voiceId;
+    return saved;
   } catch {
     return DEFAULT_VOICE;
   }

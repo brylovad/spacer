@@ -10,7 +10,7 @@ Wersja: prototyp (PWA — działa w przeglądarce telefonu, można ją dodać do
 2. **Gdzie jestem**: OpenStreetMap Nominatim (współrzędne → ulica, dzielnica, miasto).
 3. **Źródła**: Wikipedia (artykuły o ulicy, dzielnicy, mieście i miejscach w promieniu 1 km).
 4. **Opowieść**: model Claude na serwerze (`/api/story`) pisze narrację wyłącznie na podstawie artykułów. Bez klucza API aplikacja składa opowieść z fragmentów Wikipedii.
-5. **Głos**: synteza mowy wbudowana w telefon (Web Speech API).
+5. **Głos**: Piper — otwarty model mowy działający w telefonie (pobierany raz, ok. 63 MB). Zapasowo: głosy wbudowane w telefon (Web Speech API).
 
 ## Uruchomienie lokalne
 
@@ -45,7 +45,7 @@ src/services/geolocation.ts  lokalizacja urządzenia
 src/services/geocoding.ts    współrzędne → ulica/dzielnica/miasto
 src/services/wikipedia.ts    zbieranie artykułów
 src/services/story/          wymienialni „narratorzy” (AI, fragmenty)
-src/services/speech/         wymienialne głosy (Web Speech, w przyszłości płatny TTS)
+src/services/speech/         wymienialne głosy (Piper w Web Workerze, głosy telefonu)
 src/shared/storyApi.ts       kontrakt aplikacja ↔ serwer
 src/useGuide.ts              cały przepływ krok po kroku
 ```
