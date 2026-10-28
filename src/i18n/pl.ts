@@ -1,0 +1,32 @@
+export const pl = {
+  appName: "Spacer",
+  tagline: "Twój głosowy przewodnik po okolicy",
+  start: "Opowiedz mi, gdzie jestem",
+  retry: "Spróbuj ponownie",
+  refresh: "Opowiedz o nowym miejscu",
+  locating: "Szukam Twojej lokalizacji…",
+  identifying: "Sprawdzam, gdzie jesteś…",
+  searching: "Szukam ciekawych miejsc w okolicy…",
+  writing: "Przygotowuję opowieść…",
+  youAreHere: "Jesteś tutaj",
+  play: "Słuchaj",
+  pause: "Pauza",
+  resume: "Wznów",
+  stop: "Stop",
+  nearby: "W pobliżu",
+  sources: "Źródła: Wikipedia (CC BY-SA)",
+  fallbackNotice: "Opowieść z fragmentów Wikipedii (narrator AI nie jest jeszcze skonfigurowany).",
+  noSpeech: "Twoja przeglądarka nie obsługuje czytania na głos — możesz przeczytać opowieść poniżej.",
+  privacy: "Twoja lokalizacja nie jest nigdzie zapisywana.",
+  meters: (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`),
+  errors: {
+    permissionDenied: "Brak zgody na lokalizację. Włącz ją w ustawieniach przeglądarki i spróbuj ponownie.",
+    positionUnavailable: "Nie udało się ustalić lokalizacji. Wyjdź na zewnątrz lub spróbuj za chwilę.",
+    timeout: "Ustalanie lokalizacji trwało zbyt długo.",
+    unsupported: "Ta przeglądarka nie udostępnia lokalizacji.",
+    noPlaces: "Nie znalazłem w pobliżu artykułów w Wikipedii. Spróbuj w innym miejscu.",
+    network: "Problem z połączeniem. Sprawdź internet i spróbuj ponownie.",
+  },
+};
+
+export type Messages = typeof pl;
