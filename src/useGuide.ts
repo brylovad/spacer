@@ -4,7 +4,9 @@ import { t } from "./i18n";
 import { reverseGeocode } from "./services/geocoding";
 import { GeolocationError, getCurrentPosition } from "./services/geolocation";
 import { speechProvider } from "./services/speech";
-import { storyProvider, type Story } from "./services/story";
+import { setNowPlaying } from "./services/nowPlaying";
+import { storyProvider } from "./services/story";
+import { saveStory, type SavedStory } from "./services/storyLibrary";
 import { gatherSources } from "./services/wikipedia";
 import type { PlaceContext, SourceArticle } from "./shared/storyApi";
 
@@ -14,7 +16,8 @@ export interface GuideState {
   phase: GuidePhase;
   place?: PlaceContext;
   sources: SourceArticle[];
-  story?: Story;
+  /** Opowieść już zapisana w „Moich historiach”. */
+  story?: SavedStory;
   error?: string;
 }
 
@@ -55,9 +58,12 @@ export function useGuide() {
       if (sources.length === 0) throw new NoPlacesError();
 
       setState((s) => ({ ...s, phase: "writing", sources }));
-      const story = await storyProvider.createStory({ language: config.language, place, sources });
+      const created = await storyProvider.createStory({ language: config.language, place, sources });
+      // Każda historia od razu trafia do „Moich historii”, żeby można było do niej wrócić bez ponownego generowania.
+      const story = saveStory(created, place, sources);
 
       setState((s) => ({ ...s, phase: "ready", story }));
+      setNowPlaying(story.id);
       speechProvider.speak(story.text);
     } catch (error) {
       console.error(error);

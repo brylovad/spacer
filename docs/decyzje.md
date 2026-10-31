@@ -11,6 +11,7 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 | Narrator | Claude, z zapasowym składaniem fragmentów | Nowa klasa `StoryProvider` w `src/services/story/`, kolejność w `index.ts`. Model i prompt: `server/storyHandler.ts`. |
 | Przewodnik | 3 postacie (Kompas, Sowa, Liść) z tymczasowymi awatarami emoji; każda ma własny głos Piper — zmiana postaci = zmiana głosu | `src/guides.ts`. |
 | Profil (przewodnik, zainteresowania) | zapisany tylko w przeglądarce (`spacer.profile` w localStorage), bez kont; ekran powitalny przy pierwszym uruchomieniu, potem Ustawienia | `src/services/profile.ts`. Przy wprowadzeniu kont: przenieść profil na konto przy pierwszym logowaniu. |
+| Moje historie | każda wygenerowana historia zapisuje się automatycznie w przeglądarce (`spacer.stories` w localStorage): tytuł, tekst, nazwy miejsca (ulica, dzielnica, miasto), linki do źródeł, data — bez współrzędnych. Ponowne odsłuchanie nic nie kosztuje (głos generuje telefon) | `src/services/storyLibrary.ts`. Przy większej liczbie historii lub kontach: IndexedDB lub baza na serwerze. |
 | Personalizacja | zainteresowania (ogólne ciekawostki, natura, architektura) są zapisywane, ale jeszcze nie wpływają na opowieść | Dodać pola do `StoryRequest` (`src/shared/storyApi.ts`) i uwzględnić je w prompcie. |
 | Promień, liczba miejsc | 1 km, 10 miejsc | `src/config.ts`. |
 | Tryb | „opowiedz o miejscu, gdzie stoję” | Tryb spaceru/trasy to nowy przepływ obok `useGuide.ts` (np. `watchPosition`). |
@@ -21,7 +22,7 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 2. **Konta: brak.** Preferencje i (w przyszłości) zapisane historie trzymamy w przeglądarce. Gdy pojawią się konta (np. Supabase), dane z telefonu przenosimy na konto przy pierwszym logowaniu. Ograniczenia: dane tylko na jednym urządzeniu; Safari może je usunąć po ok. 7 dniach nieużywania strony (nie dotyczy aplikacji dodanej do ekranu głównego).
 3. **Opowieści generowane na żywo.** Kontrakt `StoryRequest → Story` pozwala dołożyć pamięć podręczną (gotowe opowieści per miejsce i język) jako kolejny `StoryProvider`, gdy ruch i koszty urosną.
 4. **Licencja treści.** Wikipedia jest na CC BY-SA: zawsze pokazujemy źródła i licencję; opowieści oparte na Wikipedii traktujemy jako udostępniane na tej samej licencji.
-5. **Prywatność.** Lokalizacja nie jest zapisywana. Współrzędne trafiają tylko do Nominatim i Wikipedii; model AI dostaje nazwy miejsc i artykuły, bez współrzędnych. Zapisywanie historii miejsc wymagałoby zgód i polityki prywatności (RODO).
+5. **Prywatność.** Współrzędne nie są zapisywane; „Moje historie” trzymają tylko nazwę miejsca, wyłącznie na urządzeniu użytkownika. Współrzędne trafiają tylko do Nominatim i Wikipedii; model AI dostaje nazwy miejsc i artykuły, bez współrzędnych. Zapisywanie historii miejsc wymagałoby zgód i polityki prywatności (RODO).
 6. **Hosting: Vercel.** Frontend statyczny + funkcja `api/story.ts`. Logika serwera jest w `server/` jako zwykła funkcja `Request → Response`, więc przeniesienie na inny hosting to nowy cienki adapter.
 
 ## Znane ograniczenia prototypu
