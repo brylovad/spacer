@@ -32,6 +32,8 @@ interface PhotonProperties {
   type?: string;
   name?: string;
   country?: string;
+  /** Kod kraju ISO 3166-1, np. „PL”. */
+  countrycode?: string;
   state?: string;
   county?: string;
   city?: string;
@@ -66,10 +68,24 @@ function levelOf(p: PhotonProperties): PlaceLevel {
   }
 }
 
-function fromPhoton(feature: PhotonFeature): PlaceSuggestion | undefined {
+/** Nazwa kraju w języku aplikacji z kodu ISO (np. „DE” → „Niemcy”); mapa podaje ją w języku lokalnym. */
+function countryName(p: PhotonProperties, language: string): string | undefined {
+  if (!p.countrycode) return p.country;
+  try {
+    return new Intl.DisplayNames([language], { type: "region" }).of(p.countrycode.toUpperCase()) ?? p.country;
+  } catch {
+    return p.country;
+  }
+}
+
+function fromPhoton(feature: PhotonFeature, language: string): PlaceSuggestion | undefined {
   const p = feature.properties;
   const level = levelOf(p);
-  const name = p.name ?? (p.street ? [p.street, p.housenumber].filter(Boolean).join(" ") : undefined);
+  const country = countryName(p, language);
+  // Kraj nazywamy po polsku — to także tytuł artykułu w Wikipedii (np. „Niemcy”, nie „Deutschland”).
+  const name =
+    (level === "country" ? country : p.name) ??
+    (p.street ? [p.street, p.housenumber].filter(Boolean).join(" ") : undefined);
   if (!name) return undefined;
   const [lon, lat] = feature.geometry.coordinates;
   const city = level === "city" ? name : p.city;
@@ -78,16 +94,16 @@ function fromPhoton(feature: PhotonFeature): PlaceSuggestion | undefined {
     street: level === "street" ? (p.street ?? name) : p.street,
     district: level === "district" ? name : (p.district ?? p.locality),
     city: level === "country" || level === "region" ? undefined : city,
-    country: level === "country" ? name : p.country,
+    country,
   };
   // Dopisek „gdzie to jest” — bez powtarzania samej nazwy.
   const contextParts: Record<PlaceLevel, (string | undefined)[]> = {
     country: [],
-    region: [p.country],
-    city: [p.state, p.country],
-    district: [p.city, p.country],
+    region: [country],
+    city: [p.state, country],
+    district: [p.city, country],
     street: [p.district, p.city],
-    object: [p.district ?? p.street, p.city ?? p.country],
+    object: [p.district ?? p.street, p.city ?? country],
   };
   const context = [...new Set(contextParts[level].filter((part): part is string => Boolean(part) && part !== name))].join(
     ", ",
@@ -102,17 +118,27 @@ function fromPhoton(feature: PhotonFeature): PlaceSuggestion | undefined {
   };
 }
 
-async function searchPhoton(query: string, signal?: AbortSignal, bias?: { lat: number; lon: number }) {
+async function searchPhoton(
+  query: string,
+  language: string,
+  signal?: AbortSignal,
+  bias?: { lat: number; lon: number },
+) {
   const url = new URL(PHOTON_URL);
   url.search = new URLSearchParams({
     q: query,
     limit: String(PHOTON_LIMIT),
+    // Bez tego Photon bierze język przeglądarki — na telefonie po angielsku Warszawa przychodzi jako „Warsaw”,
+    // a polska Wikipedia ma pod tym tytułem zupełnie inny artykuł. „default” = nazwy lokalne z mapy.
+    lang: "default",
     ...(bias ? { lat: String(bias.lat), lon: String(bias.lon) } : {}),
   }).toString();
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`Photon ${res.status}`);
   const data = (await res.json()) as { features?: PhotonFeature[] };
-  return (data.features ?? []).map(fromPhoton).filter((s): s is PlaceSuggestion => s !== undefined);
+  return (data.features ?? [])
+    .map((f) => fromPhoton(f, language))
+    .filter((s): s is PlaceSuggestion => s !== undefined);
 }
 
 function baseName(title: string): string {
@@ -127,7 +153,7 @@ export async function searchPlaces(
   signal?: AbortSignal,
 ): Promise<PlaceSuggestion[]> {
   const [photon, wiki] = await Promise.allSettled([
-    searchPhoton(query, signal, bias),
+    searchPhoton(query, language, signal, bias),
     searchArticles(language, query, WIKI_LIMIT, signal),
   ]);
   if (photon.status === "rejected" && wiki.status === "rejected") throw photon.reason;

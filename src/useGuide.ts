@@ -113,7 +113,13 @@ export function useGuide() {
             limit: config.maxNearbyPlaces,
             mainTextChars: overview ? config.overviewTextChars : undefined,
             focus: hasOwnTopic
-              ? { pageId: suggestion.wikiPageId, name: suggestion.name, context: place.city ?? place.country }
+              ? {
+                  pageId: suggestion.wikiPageId,
+                  name: suggestion.name,
+                  context: place.city ?? place.country,
+                  maxKm: config.focusMaxKmByLevel[suggestion.level],
+                  allowWithoutCoords: suggestion.level === "country" || suggestion.level === "region",
+                }
               : undefined,
           },
         };

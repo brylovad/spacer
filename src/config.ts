@@ -18,6 +18,15 @@ export const config = {
     street: 1000,
     object: 500,
   } satisfies Record<PlaceLevel, number>,
+  /** Jak daleko od wybranego punktu może leżeć artykuł o głównym temacie (chroni przed artykułem o innym miejscu tej nazwy). */
+  focusMaxKmByLevel: {
+    country: 1500,
+    region: 300,
+    city: 40,
+    district: 10,
+    street: 5,
+    object: 3,
+  } satisfies Record<PlaceLevel, number>,
   /** Ile znaków artykułu o głównym temacie dostaje narrator przy opowieści o całym mieście, regionie czy kraju. */
   overviewTextChars: 12000,
   /** Środek Polski — wyniki wyszukiwania z Polski mają pierwszeństwo. */

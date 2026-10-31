@@ -12,6 +12,8 @@ interface WikiPage {
   extract?: string;
   missing?: boolean;
   pageprops?: { disambiguation?: string };
+  coordinates?: { lat: number; lon: number }[];
+  index?: number;
 }
 
 function apiUrl(language: string, params: Record<string, string>): URL {
@@ -45,10 +47,51 @@ async function searchTitle(language: string, text: string): Promise<number | und
   return data.query?.search[0]?.pageid;
 }
 
-async function pageIdByTitle(language: string, title: string): Promise<number | undefined> {
-  const data = await query<{ query?: { pages: WikiPage[] } }>(language, { titles: title, redirects: "1" });
-  const page = data.query?.pages[0];
-  return page && !page.missing ? page.pageid : undefined;
+function distanceKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLon = (b.lon - a.lon) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+
+/** Artykuł pasuje, gdy nie jest stroną ujednoznaczniającą, a jego współrzędne leżą blisko wybranego miejsca. */
+function isNear(page: WikiPage | undefined, near: Coordinates, maxKm: number): boolean {
+  const coords = page?.coordinates?.[0];
+  return Boolean(page && !page.missing && !page.pageprops?.disambiguation && coords && distanceKm(coords, near) <= maxKm);
+}
+
+const PLACE_PROPS = { prop: "coordinates|pageprops", ppprop: "disambiguation", colimit: "max" };
+
+/**
+ * Artykuł o miejscu o tej nazwie, leżącym nie dalej niż maxKm od wskazanego punktu.
+ * Chroni przed tytułami o innym znaczeniu (np. „Warsaw” w polskiej Wikipedii to miejscowości w USA).
+ */
+async function findPlaceArticle(
+  language: string,
+  name: string,
+  context: string | undefined,
+  near: Coordinates,
+  maxKm: number,
+  allowWithoutCoords = false,
+): Promise<number | undefined> {
+  const exact = await query<{ query?: { pages: WikiPage[] } }>(language, { titles: name, redirects: "1", ...PLACE_PROPS });
+  const page = exact.query?.pages[0];
+  if (page && isNear(page, near, maxKm)) return page.pageid;
+  // Nie każdy artykuł o kraju czy regionie ma współrzędne — wtedy wystarcza dokładny tytuł.
+  if (allowWithoutCoords && page && !page.missing && !page.pageprops?.disambiguation && !page.coordinates?.length) {
+    return page.pageid;
+  }
+
+  const found = await query<{ query?: { pages: WikiPage[] } }>(language, {
+    generator: "search",
+    gsrsearch: `${name} ${context ?? ""}`.trim(),
+    gsrlimit: "5",
+    ...PLACE_PROPS,
+  });
+  return (found.query?.pages ?? [])
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    .find((p) => isNear(p, near, maxKm))?.pageid;
 }
 
 /** Wstępy (intro) wielu artykułów w jednym zapytaniu. */
@@ -89,6 +132,10 @@ export interface SourceFocus {
   name?: string;
   /** Doprecyzowanie wyszukiwania, np. miasto obiektu. */
   context?: string;
+  /** Jak daleko od wybranego punktu może leżeć artykuł o tym miejscu (kraj — daleko, obiekt — blisko). */
+  maxKm: number;
+  /** Przyjmij artykuł o dokładnie tym tytule, nawet bez współrzędnych (kraj, region). */
+  allowWithoutCoords?: boolean;
 }
 
 export interface GatherOptions {
@@ -100,15 +147,19 @@ export interface GatherOptions {
   mainTextChars?: number;
 }
 
-async function findFocus(language: string, focus: SourceFocus | undefined): Promise<number | undefined> {
+async function findFocus(
+  language: string,
+  focus: SourceFocus | undefined,
+  near: Coordinates,
+): Promise<number | undefined> {
   if (!focus) return undefined;
   if (focus.pageId !== undefined) return focus.pageId;
   if (!focus.name) return undefined;
-  return (
-    (await pageIdByTitle(language, focus.name)) ??
-    (await searchTitle(language, `${focus.name} ${focus.context ?? ""}`.trim()))
-  );
+  return findPlaceArticle(language, focus.name, focus.context, near, focus.maxKm, focus.allowWithoutCoords);
 }
+
+// Artykuł o mieście musi opisywać miasto leżące w pobliżu (środek miasta bywa kilkanaście km od punktu).
+const CITY_MAX_KM = 40;
 
 /**
  * Zbiera artykuły o wybranym obiekcie, ulicy, dzielnicy, mieście i pobliskich miejscach.
@@ -122,10 +173,10 @@ export async function gatherSources(
 ): Promise<SourceArticle[]> {
   const [nearby, focusId, streetId, districtId, cityId] = await Promise.all([
     radius > 0 ? geosearch(language, coords, radius, limit) : [],
-    findFocus(language, focus),
+    findFocus(language, focus, coords),
     place.street ? searchTitle(language, `${place.street} ${place.city ?? ""}`) : undefined,
     place.district ? searchTitle(language, `${place.district} ${place.city ?? ""}`) : undefined,
-    place.city ? pageIdByTitle(language, place.city) : undefined,
+    place.city ? findPlaceArticle(language, place.city, place.country, coords, CITY_MAX_KM) : undefined,
   ]);
 
   const distanceById = new Map(nearby.map((n) => [n.pageid, n.dist]));
