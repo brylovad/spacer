@@ -5,15 +5,15 @@ export function NearbyList({ sources }: { sources: Pick<SourceArticle, "title" |
   const nearby = sources.filter((s) => s.distanceMeters !== undefined);
   if (nearby.length === 0) return null;
   return (
-    <section className="card">
-      <h2 className="label">{t.nearby}</h2>
+    <section className="sw-card">
+      <h3>{t.nearby}</h3>
       <ul className="places">
         {nearby.map((s) => (
           <li key={s.url}>
             <a href={s.url} target="_blank" rel="noreferrer">
               {s.title}
             </a>
-            <span className="distance">{t.meters(s.distanceMeters!)}</span>
+            <span className="sw-badge">{t.meters(s.distanceMeters!)}</span>
           </li>
         ))}
       </ul>

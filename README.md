@@ -50,4 +50,6 @@ src/shared/storyApi.ts       kontrakt aplikacja ↔ serwer
 src/useGuide.ts              cały przepływ krok po kroku
 ```
 
+Wygląd: design system „Sunrise Walk” — tokeny w `src/design/tokens.json` (po zmianie: `npm run tokens`), komponenty w `src/design/components.css`.
+
 Decyzje architektoniczne i to, jak je zmienić: [docs/decyzje.md](docs/decyzje.md).

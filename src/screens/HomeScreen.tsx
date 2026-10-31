@@ -25,10 +25,10 @@ export function HomeScreen({ state, start, startFromSuggestion }: Props) {
 
   return (
     <>
-      <p className="tagline">{t.tagline}</p>
+      <p className="lead muted">{t.tagline}</p>
 
       {!busyLabel && (
-        <button className="primary" onClick={start}>
+        <button className="sw-btn sw-btn--primary sw-btn--lg sw-btn--block" onClick={start}>
           {phase === "idle" ? t.start : phase === "error" ? t.retry : t.refresh}
         </button>
       )}
@@ -37,18 +37,23 @@ export function HomeScreen({ state, start, startFromSuggestion }: Props) {
 
       {busyLabel && (
         <p className="status" role="status">
-          <span className="spinner" aria-hidden /> {busyLabel}
+          <span className="spinner" aria-hidden />
+          {busyLabel}
         </p>
       )}
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p className="alert" role="alert">
+          <strong>{t.errorLabel}</strong> {error}
+        </p>
+      )}
 
       {place && <PlaceCard place={place} label={origin === "search" ? t.chosenPlace : t.youAreHere} />}
 
       {story && (
         <>
           <StoryCard story={story} />
-          <p className="notice">{t.myStories.savedNotice}</p>
+          <p className="info">{t.myStories.savedNotice}</p>
         </>
       )}
 

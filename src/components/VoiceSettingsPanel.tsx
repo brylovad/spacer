@@ -25,13 +25,14 @@ export function VoiceSettingsPanel() {
   };
 
   return (
-    <section className="card voice-settings">
-      <h2>{t.voice.title}</h2>
-      <label className="field">
-        <span>
+    <section className="sw-card">
+      <h3>{t.voice.title}</h3>
+      <label className="sw-field">
+        <span className="sw-label">
           {t.voice.rate}: {rate.toFixed(1)}×
         </span>
         <input
+          className="range"
           type="range"
           min="0.7"
           max="1.3"
@@ -48,14 +49,17 @@ export function VoiceSettingsPanel() {
       {playback.state === "loading" ? (
         <PlaybackStatus progress={playback.progress} />
       ) : (
-        <button
-          onClick={() => {
-            speechProvider.unlock();
-            speechProvider.speak(t.voice.sample);
-          }}
-        >
-          ▶ {t.voice.preview}
-        </button>
+        <div>
+          <button
+            className="sw-btn sw-btn--sm"
+            onClick={() => {
+              speechProvider.unlock();
+              speechProvider.speak(t.voice.sample);
+            }}
+          >
+            ▶ {t.voice.preview}
+          </button>
+        </div>
       )}
       <details className="diagnostics" onToggle={() => setDiagnostics(speechProvider.describeVoices())}>
         <summary>{t.voice.diagnostics}</summary>

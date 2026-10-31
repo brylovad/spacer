@@ -6,6 +6,7 @@ import { loadPlaybackSettings } from "../services/settings";
 import { applyVoice, speechProvider } from "../services/speech";
 import { usePlayback } from "../usePlayback";
 import { PlaybackStatus } from "./PlaybackStatus";
+import { ShapeArt } from "./ShapeArt";
 
 interface Props {
   onSaved: () => void;
@@ -28,63 +29,65 @@ export function PreferencesForm({ onSaved }: Props) {
   };
 
   return (
-    <div className="preferences">
-      <section>
+    <>
+      <section className="section">
         <h2>{t.preferences.chooseGuide}</h2>
         <div className="guides" role="radiogroup" aria-label={t.preferences.chooseGuide}>
-          {GUIDES.map((guide) => (
-            <div key={guide.id} className="guide">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={guide.id === guideId}
-                className="guide-select"
-                onClick={() => setGuideId(guide.id)}
-              >
-                <span className="guide-avatar" aria-hidden>
-                  {guide.avatar}
-                </span>
-                <span>{guide.name}</span>
-              </button>
-              <button
-                type="button"
-                className="guide-listen"
-                aria-label={`${t.preferences.listen}: ${guide.name}`}
-                onClick={() => {
-                  speechProvider.unlock();
-                  speechProvider.speak(t.preferences.guideSample(guide.name), guide.voiceId);
-                }}
-              >
-                ▶ {t.preferences.listen}
-              </button>
-            </div>
-          ))}
+          {GUIDES.map((guide) => {
+            const selected = guide.id === guideId;
+            return (
+              <div key={guide.id} className="guide">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className="choice"
+                  onClick={() => setGuideId(guide.id)}
+                >
+                  <ShapeArt seed={`guide-${guide.id}`} width={96} height={96} className="avatar" />
+                  <span>{guide.name}</span>
+                  <span className="choice-state">{selected ? `✓ ${t.preferences.selected}` : ""}</span>
+                </button>
+                <button
+                  type="button"
+                  className="sw-btn sw-btn--ghost sw-btn--sm guide-listen"
+                  aria-label={`${t.preferences.listen}: ${guide.name}`}
+                  onClick={() => {
+                    speechProvider.unlock();
+                    speechProvider.speak(t.preferences.guideSample(guide.name), guide.voiceId);
+                  }}
+                >
+                  ▶ {t.preferences.listen}
+                </button>
+              </div>
+            );
+          })}
         </div>
         {playback.state === "loading" && <PlaybackStatus progress={playback.progress} />}
-        <p className="notice">{t.preferences.listenNote}</p>
+        <p className="small muted">{t.preferences.listenNote}</p>
       </section>
 
-      <section>
-        <h2>{t.preferences.interestsTitle}</h2>
-        <p className="notice">{t.preferences.interestsHint}</p>
+      <section className="section">
+        <div className="stack" style={{ gap: "var(--space-1)" }}>
+          <h2>{t.preferences.interestsTitle}</h2>
+          <p className="muted">{t.preferences.interestsHint}</p>
+        </div>
         <div className="chips">
-          {INTERESTS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              className="chip"
-              aria-pressed={interests.includes(id)}
-              onClick={() => toggleInterest(id)}
-            >
-              {t.preferences.interests[id]}
-            </button>
-          ))}
+          {INTERESTS.map((id) => {
+            const on = interests.includes(id);
+            return (
+              <button key={id} type="button" className="chip" aria-pressed={on} onClick={() => toggleInterest(id)}>
+                {on && <span aria-hidden>✓</span>}
+                {t.preferences.interests[id]}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      <button className="primary" onClick={save}>
+      <button className="sw-btn sw-btn--primary sw-btn--lg sw-btn--block" onClick={save}>
         {t.save}
       </button>
-    </div>
+    </>
   );
 }

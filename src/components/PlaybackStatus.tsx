@@ -4,8 +4,8 @@ import { t } from "../i18n";
 export function PlaybackStatus({ progress }: { progress?: number }) {
   const downloading = progress !== undefined && progress < 1;
   return (
-    <p className="status" role="status">
-      <span className="spinner" aria-hidden />{" "}
+    <p className="status small" role="status">
+      <span className="spinner" aria-hidden />
       {downloading ? t.voice.downloading(Math.round(progress * 100)) : t.voice.preparing}
     </p>
   );

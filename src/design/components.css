@@ -1,0 +1,52 @@
+/* Komponenty design systemu „Sunrise Walk” (components/bundle.css), bez reguły body z podglądów. */
+.sw-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.sw-stack { display: grid; gap: var(--space-4); }
+.sw-cap { font: 500 12px/16px var(--font-sans); letter-spacing: 0.02em; color: var(--muted-foreground); margin: 0 0 var(--space-2); }
+
+/* Button */
+.sw-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 44px; padding: 0 var(--space-6); font: 500 15px/1 var(--font-sans); border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--secondary); color: var(--secondary-foreground); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 80ms ease, box-shadow 80ms ease; }
+.sw-btn:hover { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); }
+.sw-btn:active { transform: translate(2px, 2px); box-shadow: none; }
+.sw-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sw-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.sw-btn--primary { background: var(--primary); color: var(--primary-foreground); }
+.sw-btn--accent { background: var(--accent); color: var(--accent-foreground); }
+.sw-btn--outline { background: transparent; color: var(--foreground); border-color: var(--foreground); box-shadow: none; }
+.sw-btn--ghost { background: transparent; color: var(--foreground); box-shadow: none; }
+.sw-btn--destructive { background: var(--destructive); color: var(--destructive-foreground); }
+.sw-btn--sm { height: 36px; padding: 0 var(--space-4); font-size: 14px; }
+
+/* Card */
+.sw-card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: var(--space-6); display: grid; gap: var(--space-3); }
+.sw-card__title { margin: 0; font: 400 22px/28px var(--font-heading); letter-spacing: 0.01em; }
+.sw-card__text { margin: 0; font: 400 14px/20px var(--font-sans); color: var(--muted-foreground); }
+
+/* Input */
+.sw-field { display: grid; gap: var(--space-2); max-width: 320px; }
+.sw-label { font: 500 14px/20px var(--font-sans); color: var(--foreground); }
+.sw-input { height: 44px; padding: 0 var(--space-3); font: 400 16px/24px var(--font-sans); background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--input); border-radius: var(--radius-lg); }
+.sw-input::placeholder { color: var(--muted-foreground); }
+.sw-input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sw-input[aria-invalid="true"] { border-color: var(--destructive); border-width: 2px; }
+.sw-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.sw-hint { margin: 0; font: 400 12px/16px var(--font-sans); color: var(--muted-foreground); }
+.sw-hint--error { color: var(--foreground); }
+
+/* Badge */
+.sw-badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 var(--space-3); font: 500 12px/16px var(--font-sans); letter-spacing: 0.02em; border-radius: var(--radius-pill); background: var(--muted); color: var(--foreground); }
+.sw-badge--primary { background: var(--primary); color: var(--primary-foreground); }
+.sw-badge--secondary { background: var(--secondary); color: var(--secondary-foreground); }
+.sw-badge--accent { background: var(--accent); color: var(--accent-foreground); }
+.sw-badge--destructive { background: var(--destructive); color: var(--destructive-foreground); }
+
+/* RouteCard */
+.sw-route { padding: 0; overflow: hidden; gap: 0; max-width: 320px; }
+.sw-route__art { display: block; width: 100%; height: 136px; }
+.sw-route__body { display: grid; gap: var(--space-3); padding: var(--space-4) var(--space-6) var(--space-6); }
+.sw-route__meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sw-art-bg-a { stop-color: var(--palette-peach); }
+.sw-art-bg-b { stop-color: var(--palette-pink); }
+.sw-art-navy { fill: var(--palette-navy); }
+.sw-art-sky { fill: var(--palette-sky); }
+.sw-art-orange { fill: var(--palette-orange); }
+.sw-art-cream { fill: var(--palette-cream); }

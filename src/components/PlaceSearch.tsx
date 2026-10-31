@@ -1,24 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { config } from "../config";
 import { t } from "../i18n";
-import { MIN_QUERY_LENGTH, searchPlaces, type PlaceLevel, type PlaceSuggestion } from "../services/placeSearch";
+import { MIN_QUERY_LENGTH, searchPlaces, type PlaceSuggestion } from "../services/placeSearch";
 
 // Czekamy z zapytaniem, aż użytkownik przestanie pisać — oszczędza publiczne usługi.
 const DEBOUNCE_MS = 350;
-
-const levelIcons: Record<PlaceLevel, string> = {
-  country: "🌍",
-  region: "🗺️",
-  city: "🏙️",
-  district: "🏘️",
-  street: "🛣️",
-  object: "🏛️",
-};
 
 type SearchState = "idle" | "loading" | "done" | "error";
 
 /** Ręczne wyszukiwanie miejsca — gdy użytkownik nie chce lub nie może użyć lokalizacji. */
 export function PlaceSearch({ onSelect }: { onSelect: (suggestion: PlaceSuggestion) => void }) {
+  const inputId = useId();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [state, setState] = useState<SearchState>("idle");
@@ -56,10 +48,14 @@ export function PlaceSearch({ onSelect }: { onSelect: (suggestion: PlaceSuggesti
   };
 
   return (
-    <section className="place-search">
-      <label className="field">
-        <span>{t.search.label}</span>
+    <section className="section">
+      <div className="sw-field">
+        <label className="sw-label" htmlFor={inputId}>
+          {t.search.label}
+        </label>
         <input
+          id={inputId}
+          className="sw-input"
           type="search"
           value={query}
           placeholder={t.search.placeholder}
@@ -67,34 +63,35 @@ export function PlaceSearch({ onSelect }: { onSelect: (suggestion: PlaceSuggesti
           autoComplete="off"
           enterKeyHint="search"
         />
-      </label>
+      </div>
       {state === "loading" && (
-        <p className="status" role="status">
-          <span className="spinner" aria-hidden /> {t.search.searching}
+        <p className="status small" role="status">
+          <span className="spinner" aria-hidden />
+          {t.search.searching}
         </p>
       )}
-      {state === "error" && <p className="error">{t.search.error}</p>}
-      {state === "done" && results.length === 0 && <p className="notice">{t.search.noResults}</p>}
+      {state === "error" && (
+        <p className="alert" role="alert">
+          <strong>{t.errorLabel}</strong> {t.search.error}
+        </p>
+      )}
+      {state === "done" && results.length === 0 && <p className="info">{t.search.noResults}</p>}
       {results.length > 0 && (
         <>
           <ul className="search-results">
             {results.map((s) => (
               <li key={s.id}>
                 <button className="search-result" onClick={() => select(s)}>
-                  <span className="search-result-icon" aria-hidden>
-                    {levelIcons[s.level]}
-                  </span>
-                  <span>
-                    <span className="search-result-name">{s.name}</span>
-                    <span className="search-result-meta">
-                      {[t.search.levels[s.level], s.context].filter(Boolean).join(" · ")}
-                    </span>
+                  <span className="search-result-name">{s.name}</span>
+                  <span className="search-result-meta">
+                    <span className="sw-badge">{t.search.levels[s.level]}</span>
+                    {s.context}
                   </span>
                 </button>
               </li>
             ))}
           </ul>
-          <p className="notice">{t.search.attribution}</p>
+          <p className="footer">{t.search.attribution}</p>
         </>
       )}
     </section>

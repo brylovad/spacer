@@ -11,10 +11,10 @@ export function placeParts(place: PlaceContext): string[] {
 export function PlaceCard({ place, label = t.youAreHere }: { place: PlaceContext; label?: string }) {
   const [main, ...rest] = placeParts(place);
   return (
-    <section className="card">
-      <h2 className="label">{label}</h2>
-      <p className="place-main">{main}</p>
-      {rest.length > 0 && <p className="place-sub">{rest.join(" · ")}</p>}
+    <section className="sw-card">
+      <p className="eyebrow">{label}</p>
+      <p className="place-name">{main}</p>
+      {rest.length > 0 && <p className="muted">{rest.join(" · ")}</p>}
     </section>
   );
 }

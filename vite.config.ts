@@ -44,8 +44,8 @@ export default defineConfig(({ mode }) => {
           lang: "pl",
           start_url: "/",
           display: "standalone",
-          background_color: "#f6f3ec",
-          theme_color: "#2f6b4f",
+          background_color: "#f2f3df",
+          theme_color: "#f2f3df",
           icons: [
             { src: "icon-192.png", sizes: "192x192", type: "image/png" },
             { src: "icon-512.png", sizes: "512x512", type: "image/png" },
@@ -55,6 +55,8 @@ export default defineConfig(({ mode }) => {
         workbox: {
           // API i zewnętrzne usługi zawsze przez sieć — cache'ujemy aplikację i pliki silnika głosu.
           navigateFallbackDenylist: [/^\/api\//],
+          // Kroje design systemu (Righteous, Rubik) offline — tylko alfabet łaciński z polskimi znakami.
+          globPatterns: ["**/*.{js,css,html,svg,png}", "**/*-latin-*.woff2"],
           runtimeCaching: [
             {
               // Modele Piper (ok. 60 MB) i pliki WASM: pobierane raz, potem z pamięci telefonu.

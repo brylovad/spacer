@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Logo } from "./components/Logo";
 import { t } from "./i18n";
 import { loadProfile } from "./services/profile";
 import { HomeScreen } from "./screens/HomeScreen";
@@ -30,22 +31,22 @@ export default function App() {
     <main className="app">
       <header className="header">
         {stack.length > 1 ? (
-          <button className="header-action" onClick={back}>
+          <button className="sw-btn sw-btn--outline sw-btn--sm" onClick={back}>
             ← {t.back}
           </button>
         ) : (
-          <span className="app-name">{t.appName}</span>
+          <Logo width={104} />
         )}
         {screen.name !== "onboarding" && (
           <nav className="header-nav">
             {screen.name !== "stories" && (
-              <button className="header-action" onClick={() => open({ name: "stories" })}>
+              <button className="sw-btn sw-btn--ghost sw-btn--sm" onClick={() => open({ name: "stories" })}>
                 {t.myStories.title}
               </button>
             )}
             {screen.name !== "settings" && (
-              <button className="header-action" onClick={() => open({ name: "settings" })} aria-label={t.settings}>
-                ⚙
+              <button className="sw-btn sw-btn--ghost sw-btn--sm" onClick={() => open({ name: "settings" })}>
+                {t.settings}
               </button>
             )}
           </nav>
@@ -54,7 +55,9 @@ export default function App() {
 
       {screen.name === "onboarding" && <OnboardingScreen onDone={goHome} />}
       {screen.name === "settings" && <SettingsScreen onDone={back} />}
-      {screen.name === "home" && <HomeScreen state={guide.state} start={guide.start} startFromSuggestion={guide.startFromSuggestion} />}
+      {screen.name === "home" && (
+        <HomeScreen state={guide.state} start={guide.start} startFromSuggestion={guide.startFromSuggestion} />
+      )}
       {screen.name === "stories" && <StoriesScreen onOpen={(id) => open({ name: "story", id })} />}
       {screen.name === "story" && <StoryScreen id={screen.id} onDeleted={back} />}
 
