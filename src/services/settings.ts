@@ -1,22 +1,24 @@
-import type { VoiceSettings } from "./speech/types";
-
-// Ustawienia zapisywane tylko w tej przeglądarce. Gdy pojawią się konta, mogą trafić na serwer.
+// Ustawienia odtwarzania zapisywane tylko w tej przeglądarce. Głos wynika z wybranego przewodnika (profil).
 const VOICE_KEY = "spacer.voice";
-const DEFAULT_VOICE: VoiceSettings = { rate: 1 };
 
-export function loadVoiceSettings(): VoiceSettings {
+export interface PlaybackSettings {
+  /** Tempo mowy, 1 = normalne. */
+  rate: number;
+}
+
+const DEFAULT_PLAYBACK: PlaybackSettings = { rate: 1 };
+
+export function loadPlaybackSettings(): PlaybackSettings {
   try {
     const raw = localStorage.getItem(VOICE_KEY);
-    const saved = raw ? { ...DEFAULT_VOICE, ...(JSON.parse(raw) as Partial<VoiceSettings>) } : DEFAULT_VOICE;
-    // Wybór sprzed wprowadzenia głosów Piper (bez prefiksu silnika) — wracamy do ustawienia automatycznego.
-    if (saved.voiceId && !/^(piper|system):/.test(saved.voiceId)) delete saved.voiceId;
-    return saved;
+    const saved = raw ? (JSON.parse(raw) as Partial<PlaybackSettings>) : {};
+    return { rate: typeof saved.rate === "number" ? saved.rate : DEFAULT_PLAYBACK.rate };
   } catch {
-    return DEFAULT_VOICE;
+    return DEFAULT_PLAYBACK;
   }
 }
 
-export function saveVoiceSettings(settings: VoiceSettings) {
+export function savePlaybackSettings(settings: PlaybackSettings) {
   try {
     localStorage.setItem(VOICE_KEY, JSON.stringify(settings));
   } catch {

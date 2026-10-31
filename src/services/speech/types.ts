@@ -30,7 +30,8 @@ export interface SpeechProvider {
   /** Surowe informacje o głosach do diagnostyki problemów na konkretnym telefonie. */
   describeVoices(): string[];
   configure(settings: VoiceSettings): void;
-  speak(text: string): void;
+  /** Czyta tekst; voiceId pozwala jednorazowo użyć innego głosu (np. odsłuch przewodnika). */
+  speak(text: string, voiceId?: string): void;
   pause(): void;
   resume(): void;
   stop(): void;

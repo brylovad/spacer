@@ -9,14 +9,16 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 | Język | polski | Nowy plik w `src/i18n/` z kształtem `Messages`, wpis w `src/i18n/index.ts`, `language`/`speechLocale` w `src/config.ts`. Wikipedia, Nominatim i prompt biorą język z konfiguracji. |
 | Głos | Piper (open source) działający w telefonie: model neuronowy pobierany raz (~63 MB) z Hugging Face, synteza w Web Workerze; głosy telefonu (Web Speech API) jako wybór ręczny i zapas, gdy Piper nie zadziała. Wybór głosu i tempa zapisany w przeglądarce (`src/services/settings.ts`) | Głosy Piper: `src/services/speech/piper/voices.ts`. Inny silnik: nowa klasa `SpeechProvider` (`src/services/speech/types.ts`) i podmiana w `src/services/speech/index.ts`. Płatny TTS powinien iść przez serwer (klucz). |
 | Narrator | Claude, z zapasowym składaniem fragmentów | Nowa klasa `StoryProvider` w `src/services/story/`, kolejność w `index.ts`. Model i prompt: `server/storyHandler.ts`. |
-| Personalizacja | brak | Dodać pola do `StoryRequest` (`src/shared/storyApi.ts`) i uwzględnić je w prompcie. |
+| Przewodnik | 3 postacie (Kompas, Sowa, Liść) z tymczasowymi awatarami emoji; każda ma własny głos Piper — zmiana postaci = zmiana głosu | `src/guides.ts`. |
+| Profil (przewodnik, zainteresowania) | zapisany tylko w przeglądarce (`spacer.profile` w localStorage), bez kont; ekran powitalny przy pierwszym uruchomieniu, potem Ustawienia | `src/services/profile.ts`. Przy wprowadzeniu kont: przenieść profil na konto przy pierwszym logowaniu. |
+| Personalizacja | zainteresowania (ogólne ciekawostki, natura, architektura) są zapisywane, ale jeszcze nie wpływają na opowieść | Dodać pola do `StoryRequest` (`src/shared/storyApi.ts`) i uwzględnić je w prompcie. |
 | Promień, liczba miejsc | 1 km, 10 miejsc | `src/config.ts`. |
 | Tryb | „opowiedz o miejscu, gdzie stoję” | Tryb spaceru/trasy to nowy przepływ obok `useGuide.ts` (np. `watchPosition`). |
 
 ## Trudne do zmiany (ustalone)
 
 1. **Platforma: React + TypeScript jako PWA.** Później można opakować w aplikację natywną (Capacitor) bez przepisywania. Pełne prowadzenie przy zablokowanym ekranie wymaga aplikacji natywnej.
-2. **Konta: brak na start.** Gdy pojawią się logowanie, historia czy ulubione, dodajemy bazę i system kont (np. Supabase) — raz, świadomie.
+2. **Konta: brak.** Preferencje i (w przyszłości) zapisane historie trzymamy w przeglądarce. Gdy pojawią się konta (np. Supabase), dane z telefonu przenosimy na konto przy pierwszym logowaniu. Ograniczenia: dane tylko na jednym urządzeniu; Safari może je usunąć po ok. 7 dniach nieużywania strony (nie dotyczy aplikacji dodanej do ekranu głównego).
 3. **Opowieści generowane na żywo.** Kontrakt `StoryRequest → Story` pozwala dołożyć pamięć podręczną (gotowe opowieści per miejsce i język) jako kolejny `StoryProvider`, gdy ruch i koszty urosną.
 4. **Licencja treści.** Wikipedia jest na CC BY-SA: zawsze pokazujemy źródła i licencję; opowieści oparte na Wikipedii traktujemy jako udostępniane na tej samej licencji.
 5. **Prywatność.** Lokalizacja nie jest zapisywana. Współrzędne trafiają tylko do Nominatim i Wikipedii; model AI dostaje nazwy miejsc i artykuły, bez współrzędnych. Zapisywanie historii miejsc wymagałoby zgód i polityki prywatności (RODO).

@@ -1,80 +1,44 @@
 import { useEffect, useState } from "react";
 import { t } from "../i18n";
-import { loadVoiceSettings, saveVoiceSettings } from "../services/settings";
-import { speechProvider, type VoiceOption, type VoiceSettings } from "../services/speech";
+import { loadProfile } from "../services/profile";
+import { loadPlaybackSettings, savePlaybackSettings } from "../services/settings";
+import { applyVoice, speechProvider } from "../services/speech";
 import { usePlayback } from "../usePlayback";
 import { PlaybackStatus } from "./PlaybackStatus";
 
+/** Tempo mowy, próbka głosu i diagnostyka. Sam głos wynika z wybranego przewodnika. */
 export function VoiceSettingsPanel() {
-  const [voices, setVoices] = useState<VoiceOption[]>([]);
-  const [settings, setSettings] = useState<VoiceSettings>(loadVoiceSettings);
+  const [rate, setRate] = useState(() => loadPlaybackSettings().rate);
   const [diagnostics, setDiagnostics] = useState<string[]>([]);
   const playback = usePlayback();
 
   useEffect(() => {
-    const refresh = () => {
-      speechProvider.getVoices().then((list) => {
-        setVoices(list);
-        setDiagnostics(speechProvider.describeVoices());
-      });
-    };
-    refresh();
+    const refresh = () => setDiagnostics(speechProvider.describeVoices());
+    speechProvider.getVoices().then(refresh);
     return speechProvider.onVoicesChanged(refresh);
   }, []);
 
-  const update = (patch: Partial<VoiceSettings>) => {
-    const next = { ...settings, ...patch };
-    setSettings(next);
-    speechProvider.configure(next);
-    saveVoiceSettings(next);
+  const updateRate = (next: number) => {
+    setRate(next);
+    savePlaybackSettings({ rate: next });
+    applyVoice(loadProfile().guideId, next);
   };
 
-  const natural = voices.filter((v) => v.kind === "natural");
-  const device = voices.filter((v) => v.kind === "device");
-
   return (
-    <details className="card voice-settings" onToggle={() => setDiagnostics(speechProvider.describeVoices())}>
-      <summary>{t.voice.title}</summary>
-      {voices.length === 0 ? (
-        <p className="notice">{t.voice.none}</p>
-      ) : (
-        <label className="field">
-          <span>{t.voice.voice}</span>
-          <select value={settings.voiceId ?? ""} onChange={(e) => update({ voiceId: e.target.value || undefined })}>
-            <option value="">{t.voice.auto}</option>
-            {natural.length > 0 && (
-              <optgroup label={t.voice.naturalGroup}>
-                {natural.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {device.length > 0 && (
-              <optgroup label={t.voice.deviceGroup}>
-                {device.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
-        </label>
-      )}
+    <section className="card voice-settings">
+      <h2>{t.voice.title}</h2>
       <label className="field">
         <span>
-          {t.voice.rate}: {settings.rate.toFixed(1)}×
+          {t.voice.rate}: {rate.toFixed(1)}×
         </span>
         <input
           type="range"
           min="0.7"
           max="1.3"
           step="0.1"
-          value={settings.rate}
-          onChange={(e) => update({ rate: Number(e.target.value) })}
-          aria-valuetext={`${settings.rate.toFixed(1)}×`}
+          value={rate}
+          onChange={(e) => updateRate(Number(e.target.value))}
+          aria-valuetext={`${rate.toFixed(1)}×`}
         />
         <span className="range-labels">
           <span>{t.voice.rateSlow}</span>
@@ -93,10 +57,7 @@ export function VoiceSettingsPanel() {
           ▶ {t.voice.preview}
         </button>
       )}
-      {natural.length > 0 && !settings.voiceId?.startsWith("system:") && (
-        <p className="notice">{t.voice.naturalNote}</p>
-      )}
-      <details className="diagnostics">
+      <details className="diagnostics" onToggle={() => setDiagnostics(speechProvider.describeVoices())}>
         <summary>{t.voice.diagnostics}</summary>
         <p>{t.voice.allVoices(Number(diagnostics[0] ?? 0))}</p>
         <ul>
@@ -105,6 +66,6 @@ export function VoiceSettingsPanel() {
           ))}
         </ul>
       </details>
-    </details>
+    </section>
   );
 }

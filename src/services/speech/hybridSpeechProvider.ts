@@ -30,12 +30,12 @@ export class HybridSpeechProvider implements SpeechProvider {
     device.onStateChange(forward);
   }
 
-  private get usePiper(): boolean {
-    return this.piper.supported && this.piperVoices.length > 0 && !this.settings.voiceId?.startsWith(DEVICE_PREFIX);
+  private usePiper(voiceId = this.settings.voiceId): boolean {
+    return this.piper.supported && this.piperVoices.length > 0 && !voiceId?.startsWith(DEVICE_PREFIX);
   }
 
-  private get piperVoiceId(): string {
-    const chosen = this.settings.voiceId?.startsWith(PIPER_PREFIX) && this.settings.voiceId.slice(PIPER_PREFIX.length);
+  private piperVoiceId(voiceId = this.settings.voiceId): string {
+    const chosen = voiceId?.startsWith(PIPER_PREFIX) && voiceId.slice(PIPER_PREFIX.length);
     return this.piperVoices.find((v) => v.id === chosen)?.id ?? this.piperVoices[0].id;
   }
 
@@ -45,8 +45,8 @@ export class HybridSpeechProvider implements SpeechProvider {
   }
 
   prepare() {
-    if (!this.usePiper) return;
-    this.piper.load(this.piperVoiceId).catch((error: unknown) => this.recordError(error));
+    if (!this.usePiper()) return;
+    this.piper.load(this.piperVoiceId()).catch((error: unknown) => this.recordError(error));
   }
 
   async getVoices(): Promise<VoiceOption[]> {
@@ -89,13 +89,13 @@ export class HybridSpeechProvider implements SpeechProvider {
     console.warn("Piper failed, using device voice", error);
   }
 
-  speak(text: string) {
+  speak(text: string, voiceId?: string) {
     this.stop();
-    if (!this.usePiper) {
+    if (!this.usePiper(voiceId)) {
       this.device.speak(text);
       return;
     }
-    this.piper.speak(this.piperVoiceId, text).catch((error: unknown) => {
+    this.piper.speak(this.piperVoiceId(voiceId), text).catch((error: unknown) => {
       this.recordError(error);
       this.device.speak(text);
     });
