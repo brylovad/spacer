@@ -50,7 +50,7 @@ export function saveStory(story: Story, place: PlaceContext, sources: SourceArti
     ...story,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    place: { street: place.street, district: place.district, city: place.city, country: place.country },
+    place: { name: place.name, street: place.street, district: place.district, city: place.city, country: place.country },
     sources: sources.map(({ title, url, distanceMeters }) => ({ title, url, distanceMeters })),
   };
   write([saved, ...listStories()]);

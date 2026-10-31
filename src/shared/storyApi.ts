@@ -2,6 +2,8 @@
 // Wspólny dla przeglądarki i serwera, więc nie może importować niczego z DOM ani Node.
 
 export interface PlaceContext {
+  /** Nazwa miejsca wybranego w wyszukiwarce (np. „Wawel”); brak przy lokalizacji z GPS. */
+  name?: string;
   street?: string;
   district?: string;
   city?: string;

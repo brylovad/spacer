@@ -7,7 +7,7 @@ Wersja: prototyp (PWA — działa w przeglądarce telefonu, można ją dodać do
 ## Jak to działa
 
 1. **Lokalizacja**: przeglądarka (Geolocation API, wymaga HTTPS i zgody użytkownika).
-2. **Gdzie jestem**: OpenStreetMap Nominatim (współrzędne → ulica, dzielnica, miasto).
+2. **Gdzie jestem**: OpenStreetMap Nominatim (współrzędne → ulica, dzielnica, miasto) — albo ręczne wyszukanie miejsca (Photon/OpenStreetMap + Wikipedia): kraj, miasto, dzielnica, ulica, zabytek.
 3. **Źródła**: Wikipedia (artykuły o ulicy, dzielnicy, mieście i miejscach w promieniu 1 km).
 4. **Opowieść**: model Claude na serwerze (`/api/story`) pisze narrację wyłącznie na podstawie artykułów. Bez klucza API aplikacja składa opowieść z fragmentów Wikipedii.
 5. **Głos**: Piper — otwarty model mowy działający w telefonie (pobierany raz, ok. 63 MB). Zapasowo: głosy wbudowane w telefon (Web Speech API).

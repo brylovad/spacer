@@ -81,26 +81,53 @@ function normalize(s: string): string {
   return s.toLocaleLowerCase().replace(/^(ulica|aleja|al\.|ul\.|plac|pl\.)\s+/, "");
 }
 
+/** Główny temat opowieści wybrany w wyszukiwarce (kraj, region, obiekt). */
+export interface SourceFocus {
+  /** Znany artykuł (np. podpowiedź z Wikipedii). */
+  pageId?: number;
+  /** Nazwa do odszukania artykułu, gdy pageId nieznane. */
+  name?: string;
+  /** Doprecyzowanie wyszukiwania, np. miasto obiektu. */
+  context?: string;
+}
+
+export interface GatherOptions {
+  /** Promień szukania pobliskich miejsc; 0 = bez pobliskich (np. cały kraj). */
+  radius: number;
+  limit: number;
+  focus?: SourceFocus;
+}
+
+async function findFocus(language: string, focus: SourceFocus | undefined): Promise<number | undefined> {
+  if (!focus) return undefined;
+  if (focus.pageId !== undefined) return focus.pageId;
+  if (!focus.name) return undefined;
+  return (
+    (await pageIdByTitle(language, focus.name)) ??
+    (await searchTitle(language, `${focus.name} ${focus.context ?? ""}`.trim()))
+  );
+}
+
 /**
- * Zbiera artykuły o ulicy, dzielnicy, mieście i pobliskich miejscach.
- * Kolejność wyniku: najpierw miejsce, w którym stoi użytkownik, potem pobliskie punkty od najbliższego.
+ * Zbiera artykuły o wybranym obiekcie, ulicy, dzielnicy, mieście i pobliskich miejscach.
+ * Kolejność wyniku: najpierw główny temat i miejsce, potem pobliskie punkty od najbliższego.
  */
 export async function gatherSources(
   language: string,
   coords: Coordinates,
   place: PlaceContext,
-  radius: number,
-  limit: number,
+  { radius, limit, focus }: GatherOptions,
 ): Promise<SourceArticle[]> {
-  const [nearby, streetId, districtId, cityId] = await Promise.all([
-    geosearch(language, coords, radius, limit),
+  const [nearby, focusId, streetId, districtId, cityId] = await Promise.all([
+    radius > 0 ? geosearch(language, coords, radius, limit) : [],
+    findFocus(language, focus),
     place.street ? searchTitle(language, `${place.street} ${place.city ?? ""}`) : undefined,
     place.district ? searchTitle(language, `${place.district} ${place.city ?? ""}`) : undefined,
     place.city ? pageIdByTitle(language, place.city) : undefined,
   ]);
 
   const distanceById = new Map(nearby.map((n) => [n.pageid, n.dist]));
-  const contextIds = [streetId, districtId, cityId].filter((id): id is number => id !== undefined);
+  const contextIds = [focusId, streetId, districtId, cityId].filter((id): id is number => id !== undefined);
   const allIds = [...new Set([...contextIds, ...nearby.map((n) => n.pageid)])];
   const pages = (await fetchIntros(language, allIds)).filter((p) => !p.missing && !p.pageprops?.disambiguation);
   const pageById = new Map(pages.map((p) => [p.pageid, p]));
@@ -111,11 +138,10 @@ export async function gatherSources(
     pageById.delete(street.pageid);
   }
 
-  // Najważniejsze artykuły dostają dłuższy tekst niż sam wstęp.
+  // Najważniejsze artykuły (główny temat i miejsce, najbliższe punkty) dostają dłuższy tekst niż sam wstęp.
+  const mainIds = [...new Set(contextIds)].filter((id) => pageById.has(id)).slice(0, 2);
   const nearest = nearby.slice(0, 3).map((n) => n.pageid);
-  const detailed = [...new Set([streetId, districtId, ...nearest])].filter(
-    (id): id is number => id !== undefined && pageById.has(id),
-  );
+  const detailed = [...new Set([...mainIds, ...nearest])].filter((id) => pageById.has(id));
   const fullTexts = await Promise.all(detailed.map((id) => fetchFullText(language, id)));
   detailed.forEach((id, i) => {
     const text = fullTexts[i];
@@ -123,14 +149,54 @@ export async function gatherSources(
     if (page && text) page.extract = text;
   });
 
-  const ordered = [...contextIds.filter((id) => !distanceById.has(id)), ...nearby.map((n) => n.pageid)];
+  const ordered = [...contextIds.filter((id) => !distanceById.has(id) || id === focusId), ...nearby.map((n) => n.pageid)];
   return [...new Set(ordered)]
     .map((id) => pageById.get(id))
     .filter((p): p is WikiPage => p !== undefined && Boolean(p.extract?.trim()))
     .map((p) => ({
       title: p.title,
       url: p.fullurl ?? `https://${language}.wikipedia.org/?curid=${p.pageid}`,
-      distanceMeters: distanceById.get(p.pageid),
+      distanceMeters: p.pageid === focusId ? undefined : distanceById.get(p.pageid),
       extract: p.extract!.trim(),
+    }));
+}
+
+export interface ArticleSuggestion {
+  pageId: number;
+  title: string;
+  description?: string;
+  coords: Coordinates;
+}
+
+/** Artykuły z Wikipedii pasujące do początku nazwy i mające współrzędne (zabytki, obiekty). */
+export async function searchArticles(
+  language: string,
+  text: string,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<ArticleSuggestion[]> {
+  const url = apiUrl(language, {
+    action: "query",
+    generator: "prefixsearch",
+    gpssearch: text,
+    gpslimit: String(limit),
+    prop: "coordinates|description|pageprops",
+    ppprop: "disambiguation",
+  });
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`Wikipedia ${res.status}`);
+  const data = (await res.json()) as {
+    query?: {
+      pages: (WikiPage & { index?: number; description?: string; coordinates?: { lat: number; lon: number }[] })[];
+    };
+  };
+  return (data.query?.pages ?? [])
+    .filter((p) => p.coordinates?.length && !p.pageprops?.disambiguation)
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    .map((p) => ({
+      pageId: p.pageid,
+      title: p.title,
+      description: p.description,
+      coords: { lat: p.coordinates![0].lat, lon: p.coordinates![0].lon, accuracy: 0 },
     }));
 }

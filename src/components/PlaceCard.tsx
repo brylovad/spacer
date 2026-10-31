@@ -2,7 +2,10 @@ import { t } from "../i18n";
 import type { PlaceContext } from "../shared/storyApi";
 
 export function placeParts(place: PlaceContext): string[] {
-  return [place.street, place.district, place.city].filter((p): p is string => Boolean(p));
+  const parts = [place.name, place.street, place.district, place.city].filter((p): p is string => Boolean(p));
+  // Kraj pokazujemy tylko, gdy nie ma nic dokładniejszego (np. wybrano cały kraj).
+  if (parts.length === 0 && place.country) parts.push(place.country);
+  return [...new Set(parts)];
 }
 
 export function PlaceCard({ place, label = t.youAreHere }: { place: PlaceContext; label?: string }) {

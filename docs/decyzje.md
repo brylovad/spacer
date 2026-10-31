@@ -14,7 +14,8 @@ Każda decyzja ma zapisane, gdzie w kodzie ją zmienić.
 | Moje historie | każda wygenerowana historia zapisuje się automatycznie w przeglądarce (`spacer.stories` w localStorage): tytuł, tekst, nazwy miejsca (ulica, dzielnica, miasto), linki do źródeł, data — bez współrzędnych. Ponowne odsłuchanie nic nie kosztuje (głos generuje telefon) | `src/services/storyLibrary.ts`. Przy większej liczbie historii lub kontach: IndexedDB lub baza na serwerze. |
 | Personalizacja | zainteresowania (ogólne ciekawostki, natura, architektura) są zapisywane, ale jeszcze nie wpływają na opowieść | Dodać pola do `StoryRequest` (`src/shared/storyApi.ts`) i uwzględnić je w prompcie. |
 | Promień, liczba miejsc | 1 km, 10 miejsc | `src/config.ts`. |
-| Tryb | „opowiedz o miejscu, gdzie stoję” | Tryb spaceru/trasy to nowy przepływ obok `useGuide.ts` (np. `watchPosition`). |
+| Wyszukiwarka miejsc | Photon (OpenStreetMap, publiczna instancja, uczciwe użycie) + zabytki z Wikipedii; cały świat z priorytetem dla Polski; poziomy: kraj, region, miasto, dzielnica, ulica, obiekt. Wpisane frazy nie są zapisywane | `src/services/placeSearch.ts`; promienie per poziom i środek priorytetu: `src/config.ts`. Przy większym ruchu: własna instancja Photon lub płatny dostawca (Mapbox, Google Places). Nominatim zostaje tylko do rozpoznania miejsca z GPS (jego regulamin zabrania podpowiedzi w trakcie pisania). |
+| Tryb | „opowiedz o miejscu, gdzie stoję” albo o miejscu z wyszukiwarki (ton opowieści na razie ten sam) | Tryb spaceru/trasy to nowy przepływ obok `useGuide.ts` (np. `watchPosition`). |
 
 ## Trudne do zmiany (ustalone)
 

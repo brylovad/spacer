@@ -325,3 +325,46 @@ button.primary {
   font-size: 0.85rem;
   color: var(--muted);
 }
+
+.field input[type="search"] {
+  font: inherit;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-result {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.search-result-icon {
+  font-size: 1.4rem;
+}
+
+.search-result-name {
+  display: block;
+  font-weight: 600;
+}
+
+.search-result-meta {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

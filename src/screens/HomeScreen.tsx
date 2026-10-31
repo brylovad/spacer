@@ -1,7 +1,9 @@
 import { NearbyList } from "../components/NearbyList";
 import { PlaceCard } from "../components/PlaceCard";
+import { PlaceSearch } from "../components/PlaceSearch";
 import { StoryCard } from "../components/StoryCard";
 import { t } from "../i18n";
+import type { PlaceSuggestion } from "../services/placeSearch";
 import type { GuidePhase, GuideState } from "../useGuide";
 
 const busyLabels: Partial<Record<GuidePhase, string>> = {
@@ -14,10 +16,11 @@ const busyLabels: Partial<Record<GuidePhase, string>> = {
 interface Props {
   state: GuideState;
   start: () => void;
+  startFromSuggestion: (suggestion: PlaceSuggestion) => void;
 }
 
-export function HomeScreen({ state, start }: Props) {
-  const { phase, place, sources, story, error } = state;
+export function HomeScreen({ state, start, startFromSuggestion }: Props) {
+  const { phase, origin, place, sources, story, error } = state;
   const busyLabel = busyLabels[phase];
 
   return (
@@ -30,6 +33,8 @@ export function HomeScreen({ state, start }: Props) {
         </button>
       )}
 
+      {!busyLabel && <PlaceSearch onSelect={startFromSuggestion} />}
+
       {busyLabel && (
         <p className="status" role="status">
           <span className="spinner" aria-hidden /> {busyLabel}
@@ -38,7 +43,7 @@ export function HomeScreen({ state, start }: Props) {
 
       {error && <p className="error">{error}</p>}
 
-      {place && <PlaceCard place={place} />}
+      {place && <PlaceCard place={place} label={origin === "search" ? t.chosenPlace : t.youAreHere} />}
 
       {story && (
         <>

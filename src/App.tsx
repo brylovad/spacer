@@ -54,7 +54,7 @@ export default function App() {
 
       {screen.name === "onboarding" && <OnboardingScreen onDone={goHome} />}
       {screen.name === "settings" && <SettingsScreen onDone={back} />}
-      {screen.name === "home" && <HomeScreen state={guide.state} start={guide.start} />}
+      {screen.name === "home" && <HomeScreen state={guide.state} start={guide.start} startFromSuggestion={guide.startFromSuggestion} />}
       {screen.name === "stories" && <StoriesScreen onOpen={(id) => open({ name: "story", id })} />}
       {screen.name === "story" && <StoryScreen id={screen.id} onDeleted={back} />}
 

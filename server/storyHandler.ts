@@ -24,8 +24,9 @@ function systemPrompt(language: string): string {
 }
 
 function userPrompt(req: StoryRequest): string {
-  const { street, district, city, country } = req.place;
+  const { name, street, district, city, country } = req.place;
   const where = [
+    name && `Miejsce: ${name}`,
     street && `Ulica: ${street}`,
     district && `Dzielnica: ${district}`,
     city && `Miasto: ${city}`,
