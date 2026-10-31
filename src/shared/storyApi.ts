@@ -21,6 +21,11 @@ export interface SourceArticle {
 export interface StoryRequest {
   /** Kod języka opowieści, np. "pl". */
   language: string;
+  /**
+   * "place" — opowieść o miejscu, w którym słuchacz stoi, i jego okolicy (domyślnie);
+   * "overview" — opowieść o mieście, regionie lub kraju jako całości (pierwszy artykuł to główny temat).
+   */
+  scope?: "place" | "overview";
   place: PlaceContext;
   sources: SourceArticle[];
 }

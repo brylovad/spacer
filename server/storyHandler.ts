@@ -4,21 +4,33 @@ import type { StoryErrorResponse, StoryRequest, StoryResponse, StoryStatusRespon
 const MODEL = "claude-opus-5-5";
 const MAX_SOURCES = 12;
 const MAX_EXTRACT_CHARS = 2500;
+// Przy opowieści o całym mieście, regionie czy kraju główny artykuł może być dłuższy.
+const MAX_MAIN_EXTRACT_CHARS = 12000;
 
 const LANGUAGE_NAMES: Record<string, string> = {
   pl: "polskim",
   en: "English",
 };
 
-function systemPrompt(language: string): string {
+const SCOPE_INSTRUCTIONS: Record<NonNullable<StoryRequest["scope"]>, string[]> = {
+  place: [
+    "Zacznij od miejsca, w którym słuchacz stoi (ulica, dzielnica), potem wpleć dwa do czterech najciekawszych pobliskich miejsc i ciekawostek, a na koniec zachęć do rozejrzenia się wokół.",
+    "Długość: około 200 do 350 słów.",
+  ],
+  overview: [
+    "To opowieść o mieście, regionie lub kraju jako całości, opisanym w pierwszym artykule — nie o jednym jego punkcie czy placu. Pokaż jego charakter, najważniejsze momenty historii w skrócie i najciekawsze ciekawostki; konkretne miejsca wspominaj tylko jako przykłady.",
+    "Długość: około 300 do 450 słów.",
+  ],
+};
+
+function systemPrompt(language: string, scope: NonNullable<StoryRequest["scope"]>): string {
   const languageName = LANGUAGE_NAMES[language] ?? language;
   return [
-    "Jesteś Spacer: ciepły, błyskotliwy przewodnik miejski, który opowiada słuchaczowi o miejscu, w którym właśnie stoi.",
+    "Jesteś Spacer: ciepły, błyskotliwy przewodnik, który opowiada słuchaczowi o miejscach.",
     `Pisz w języku: ${languageName}.`,
     "Tekst zostanie odczytany przez syntezator mowy, więc pisz jak do słuchania: naturalne zdania, bez list, nagłówków, markdownu, emoji, nawiasów i skrótów; liczby i daty zapisuj tak, by dobrze brzmiały na głos.",
     "Opieraj się wyłącznie na faktach z dostarczonych artykułów Wikipedii. Nie wymyślaj dat, nazwisk ani anegdot. Jeśli źródła są skąpe, opowieść ma być krótsza, a nie zmyślona.",
-    "Zacznij od miejsca, w którym słuchacz stoi (ulica, dzielnica), potem wpleć dwa do czterech najciekawszych pobliskich miejsc i ciekawostek, a na koniec zachęć do rozejrzenia się wokół.",
-    "Długość: około 200 do 350 słów.",
+    ...SCOPE_INSTRUCTIONS[scope],
     'Odpowiedz wyłącznie obiektem JSON: {"title": "krótki tytuł opowieści", "text": "treść opowieści"}.',
   ].join("\n");
 }
@@ -38,10 +50,11 @@ function userPrompt(req: StoryRequest): string {
     .slice(0, MAX_SOURCES)
     .map((s, i) => {
       const distance = s.distanceMeters !== undefined ? ` (ok. ${Math.round(s.distanceMeters)} m od słuchacza)` : "";
-      return `<artykul nr="${i + 1}" tytul="${s.title}"${distance}>\n${s.extract.slice(0, MAX_EXTRACT_CHARS)}\n</artykul>`;
+      return `<artykul nr="${i + 1}" tytul="${s.title}"${distance}>\n${s.extract.slice(0, i === 0 && req.scope === "overview" ? MAX_MAIN_EXTRACT_CHARS : MAX_EXTRACT_CHARS)}\n</artykul>`;
     })
     .join("\n\n");
-  return `Gdzie stoi słuchacz:\n${where || "nieznane"}\n\nArtykuły z Wikipedii:\n${sources}`;
+  const heading = req.scope === "overview" ? "O czym jest opowieść" : "Gdzie stoi słuchacz";
+  return `${heading}:\n${where || "nieznane"}\n\nArtykuły z Wikipedii:\n${sources}`;
 }
 
 function isStoryRequest(body: unknown): body is StoryRequest {
@@ -113,7 +126,7 @@ export async function handleStoryRequest(request: Request, apiKey: string | unde
           },
         },
       },
-      system: systemPrompt(body.language),
+      system: systemPrompt(body.language, body.scope === "overview" ? "overview" : "place"),
       messages: [{ role: "user", content: userPrompt(body) }],
     });
 

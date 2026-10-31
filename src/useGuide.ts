@@ -9,7 +9,7 @@ import { speechProvider } from "./services/speech";
 import { storyProvider } from "./services/story";
 import { saveStory, type SavedStory } from "./services/storyLibrary";
 import { gatherSources, type GatherOptions } from "./services/wikipedia";
-import type { PlaceContext, SourceArticle } from "./shared/storyApi";
+import type { PlaceContext, SourceArticle, StoryRequest } from "./shared/storyApi";
 
 export type GuidePhase = "idle" | "locating" | "identifying" | "searching" | "writing" | "ready" | "error";
 
@@ -28,6 +28,7 @@ interface Target {
   coords: Coordinates;
   place: PlaceContext;
   options: GatherOptions;
+  scope: StoryRequest["scope"];
 }
 
 class NoPlacesError extends Error {}
@@ -51,14 +52,14 @@ export function useGuide() {
     speechProvider.prepare();
     setState({ phase: origin === "here" ? "locating" : "searching", origin, sources: [] });
     try {
-      const { coords, place, options } = await resolveTarget();
+      const { coords, place, options, scope } = await resolveTarget();
 
       setState((s) => ({ ...s, phase: "searching", place }));
       const sources = await gatherSources(config.language, coords, place, options);
       if (sources.length === 0) throw new NoPlacesError();
 
       setState((s) => ({ ...s, phase: "writing", sources }));
-      const created = await storyProvider.createStory({ language: config.language, place, sources });
+      const created = await storyProvider.createStory({ language: config.language, scope, place, sources });
       // Każda historia od razu trafia do „Moich historii”, żeby można było do niej wrócić bez ponownego generowania.
       const story = saveStory(created, place, sources);
 
@@ -78,7 +79,12 @@ export function useGuide() {
         const coords = await getCurrentPosition();
         setState((s) => ({ ...s, phase: "identifying" }));
         const place = await reverseGeocode(coords, config.language);
-        return { coords, place, options: { radius: config.searchRadiusMeters, limit: config.maxNearbyPlaces } };
+        return {
+          coords,
+          place,
+          scope: "place",
+          options: { radius: config.searchRadiusMeters, limit: config.maxNearbyPlaces },
+        };
       }),
     [run],
   );
@@ -96,12 +102,16 @@ export function useGuide() {
         // Kraj, region i obiekt mają własny artykuł jako główny temat; miasto, dzielnicę i ulicę
         // znajduje się po nazwach w opisie miejsca.
         const hasOwnTopic = ["country", "region", "object"].includes(suggestion.level);
+        // Miasto, region i kraj opowiadamy jako całość, a nie przez obiekty wokół ich środka.
+        const overview = ["country", "region", "city"].includes(suggestion.level);
         return {
           coords: suggestion.coords,
           place,
+          scope: overview ? "overview" : "place",
           options: {
             radius: config.searchRadiusByLevel[suggestion.level],
             limit: config.maxNearbyPlaces,
+            mainTextChars: overview ? config.overviewTextChars : undefined,
             focus: hasOwnTopic
               ? { pageId: suggestion.wikiPageId, name: suggestion.name, context: place.city ?? place.country }
               : undefined,

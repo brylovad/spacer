@@ -67,14 +67,14 @@ async function fetchIntros(language: string, pageIds: number[]): Promise<WikiPag
 }
 
 /** Dłuższy tekst jednego artykułu (API zwraca pełne teksty tylko po jednym). */
-async function fetchFullText(language: string, pageId: number): Promise<string | undefined> {
+async function fetchFullText(language: string, pageId: number, maxChars = FULL_TEXT_CHARS): Promise<string | undefined> {
   const data = await query<{ query?: { pages: WikiPage[] } }>(language, {
     pageids: String(pageId),
     prop: "extracts",
     explaintext: "1",
     exsectionformat: "plain",
   });
-  return data.query?.pages[0]?.extract?.slice(0, FULL_TEXT_CHARS);
+  return data.query?.pages[0]?.extract?.slice(0, maxChars);
 }
 
 function normalize(s: string): string {
@@ -96,6 +96,8 @@ export interface GatherOptions {
   radius: number;
   limit: number;
   focus?: SourceFocus;
+  /** Dłuższy tekst artykułu o głównym temacie (opowieść o całym mieście, regionie, kraju). */
+  mainTextChars?: number;
 }
 
 async function findFocus(language: string, focus: SourceFocus | undefined): Promise<number | undefined> {
@@ -116,7 +118,7 @@ export async function gatherSources(
   language: string,
   coords: Coordinates,
   place: PlaceContext,
-  { radius, limit, focus }: GatherOptions,
+  { radius, limit, focus, mainTextChars }: GatherOptions,
 ): Promise<SourceArticle[]> {
   const [nearby, focusId, streetId, districtId, cityId] = await Promise.all([
     radius > 0 ? geosearch(language, coords, radius, limit) : [],
@@ -142,7 +144,9 @@ export async function gatherSources(
   const mainIds = [...new Set(contextIds)].filter((id) => pageById.has(id)).slice(0, 2);
   const nearest = nearby.slice(0, 3).map((n) => n.pageid);
   const detailed = [...new Set([...mainIds, ...nearest])].filter((id) => pageById.has(id));
-  const fullTexts = await Promise.all(detailed.map((id) => fetchFullText(language, id)));
+  const fullTexts = await Promise.all(
+    detailed.map((id, i) => fetchFullText(language, id, i === 0 && mainTextChars ? mainTextChars : undefined)),
+  );
   detailed.forEach((id, i) => {
     const text = fullTexts[i];
     const page = pageById.get(id);

@@ -13,11 +13,13 @@ export const config = {
   searchRadiusByLevel: {
     country: 0,
     region: 0,
-    city: 2000,
+    city: 0,
     district: 1500,
     street: 1000,
     object: 500,
   } satisfies Record<PlaceLevel, number>,
+  /** Ile znaków artykułu o głównym temacie dostaje narrator przy opowieści o całym mieście, regionie czy kraju. */
+  overviewTextChars: 12000,
   /** Środek Polski — wyniki wyszukiwania z Polski mają pierwszeństwo. */
   searchBias: { lat: 52.07, lon: 19.48 },
 };
